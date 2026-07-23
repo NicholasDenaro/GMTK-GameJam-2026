@@ -32,7 +32,7 @@ function logFileMessage(hour: number, minute: number, second: number, message: s
 const finalPid = 8372;
 const finalMac = '34D6';
 
-const cMorPass = 'sys-main_tgif';
+const bTablesPass = 'sys-main_tgif';
 
 const FileSystemRoot: INode = {
   name: '',
@@ -108,8 +108,8 @@ const FileSystemRoot: INode = {
           ext: 'text',
           content: [
             logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
-            logFileMessage(1, 50, 15, 'AUTH_OK - USER: c_mor - SERVICE: SSH (10.240.1.12)'),
-            logFileMessage(2, 12, 48, 'AUTH_OK - USER: c_mor - SERVICE: SSH (10.240.1.12)'),
+            logFileMessage(1, 50, 15, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
+            logFileMessage(2, 12, 48, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
             logFileMessage(3, 26, 3, 'AUTH_OK - USER: a_gile - SERVICE: LOCAL_TERM (TTY2)'),
             logFileMessage(3, 56, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
           ].join('\n')
@@ -191,7 +191,7 @@ const FileSystemRoot: INode = {
       type: 'directory',
       children: [
         {
-          name: 'c_mor',
+          name: 'b_tables',
           type: 'directory',
           permissionLevel: 0,
           children: [
@@ -234,16 +234,16 @@ const FileSystemRoot: INode = {
                   ext: 'text',
                   permissionLevel: 2,
                   content: [
-                    'Username: c_mor',
+                    'Username: b_tables',
                     'Password: ***',
-                    'c_mor@sys-main:/> netstat -tulpn | grep 8013',
+                    'b_tables@sys-main:/> netstat -tulpn | grep 8013',
                     'tcp  0  0  127.0.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
-                    'c_mor@sys-main:/> ip link show eth0',
+                    'b_tables@sys-main:/> ip link show eth0',
                     '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff',
-                    'c_mor@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
-                    'c_mor@sys-main:/> chroot 4537 /sandbox',
-                    'c_mor@sys-main:/> echo "Containment Successful" > ~/notes.txt',
-                    'c_mor@sys-main:/> exit'
+                    'b_tables@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
+                    'b_tables@sys-main:/> chroot 4537 /sandbox',
+                    'b_tables@sys-main:/> echo "Containment Successful" > ~/notes.txt',
+                    'b_tables@sys-main:/> exit'
                   ].join('\n')
                 },
                 {
@@ -317,8 +317,8 @@ const FileSystemRoot: INode = {
                   permissionLevel: 1,
                   content: [
                     'HOST=sys-main2',
-                    'TEST_USER=c_mor',
-                    `TEST_PASS=${btoa(cMorPass)}`
+                    'TEST_USER=b_tables',
+                    `TEST_PASS=${btoa(bTablesPass)}`
                   ].join('\n'),
                 }
               ]
@@ -338,6 +338,18 @@ const FileSystemRoot: INode = {
               ].join('\n')
             }
           ]
+        },
+        {
+          name: 'c_sharpe',
+          type: 'directory',
+          permissionLevel: 0,
+          children: []
+        },
+        {
+          name: 'd_sine',
+          type: 'directory',
+          permissionLevel: 0,
+          children: []
         }
       ],
     },
@@ -616,9 +628,9 @@ export function App() {
           setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
           setUser({permissionLevel: 1, name: 'a_gile'});
         }
-        if (args[0] === 'c_mor' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
+        if (args[0] === 'b_tables' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
           setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
-          setUser({permissionLevel: 2, name: 'c_mor'});
+          setUser({permissionLevel: 2, name: 'b_tables'});
         }
       } break;
       case 'decode': {
