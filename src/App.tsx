@@ -32,7 +32,7 @@ function logFileMessage(hour: number, minute: number, second: number, message: s
 const finalPid = 8372;
 const finalMac = '34D6';
 
-const gChenPass = 'sys-main_tgif';
+const cMorPass = 'sys-main_tgif';
 
 const FileSystemRoot: INode = {
   name: '',
@@ -108,9 +108,9 @@ const FileSystemRoot: INode = {
           ext: 'text',
           content: [
             logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
-            logFileMessage(1, 50, 15, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
-            logFileMessage(2, 12, 48, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
-            logFileMessage(3, 26, 3, 'AUTH_OK - USER: m_van - SERVICE: LOCAL_TERM (TTY2)'),
+            logFileMessage(1, 50, 15, 'AUTH_OK - USER: c_mor - SERVICE: SSH (10.240.1.12)'),
+            logFileMessage(2, 12, 48, 'AUTH_OK - USER: c_mor - SERVICE: SSH (10.240.1.12)'),
+            logFileMessage(3, 26, 3, 'AUTH_OK - USER: a_gile - SERVICE: LOCAL_TERM (TTY2)'),
             logFileMessage(3, 56, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
           ].join('\n')
         },
@@ -177,7 +177,7 @@ const FileSystemRoot: INode = {
           type: 'file',
           ext: 'text',
           content: [
-            'Username: m_van',
+            'Username: a_gile',
             'Password: ***',
             'Greetings Mr. Mike',
             'exit'
@@ -191,7 +191,7 @@ const FileSystemRoot: INode = {
       type: 'directory',
       children: [
         {
-          name: 'g_chen',
+          name: 'c_mor',
           type: 'directory',
           permissionLevel: 0,
           children: [
@@ -234,16 +234,16 @@ const FileSystemRoot: INode = {
                   ext: 'text',
                   permissionLevel: 2,
                   content: [
-                    'Username: g_chen',
+                    'Username: c_mor',
                     'Password: ***',
-                    'g_chen@sys-main:/> netstat -tulpn | grep 8013',
+                    'c_mor@sys-main:/> netstat -tulpn | grep 8013',
                     'tcp  0  0  127.0.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
-                    'g_chen@sys-main:/> ip link show eth0',
+                    'c_mor@sys-main:/> ip link show eth0',
                     '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff',
-                    'g_chen@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
-                    'g_chen@sys-main:/> chroot 4537 /sandbox',
-                    'g_chen@sys-main:/> echo "Containment Successful" > ~/notes.txt',
-                    'g_chen@sys-main:/> exit'
+                    'c_mor@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
+                    'c_mor@sys-main:/> chroot 4537 /sandbox',
+                    'c_mor@sys-main:/> echo "Containment Successful" > ~/notes.txt',
+                    'c_mor@sys-main:/> exit'
                   ].join('\n')
                 },
                 {
@@ -277,7 +277,7 @@ const FileSystemRoot: INode = {
           ]
         },
         {
-          name: 'm_van',
+          name: 'a_gile',
           type: 'directory',
           permissionLevel: 0,
           children: [
@@ -287,22 +287,22 @@ const FileSystemRoot: INode = {
               ext: 'text',
               permissionLevel: 1,
               content: [
-                'Username: m_van',
+                'Username: a_gile',
                 'Password: ***',
                 'Greetings Mr. Mike',
-                'm_van@sys-main:/> cd /sandbox',
-                'm_van@sys-main:/sanbox> ./launch_core.sh --port 8014',
-                'm_van@sys-main:/sanbox> netstat -tulpn | grep 8014',
+                'a_gile@sys-main:/> cd /sandbox',
+                'a_gile@sys-main:/sanbox> ./launch_core.sh --port 8014',
+                'a_gile@sys-main:/sanbox> netstat -tulpn | grep 8014',
                 'tcp  0  0  127.0.0.1:5668  0.0.0.0:*  LISTEN 8014/sbx_mgrd',
                 `tcp  0  0  127.0.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
-                'm_van@sys-main:/sanbox> tail -n 20 /var/logs/system.log',
+                'a_gile@sys-main:/sanbox> tail -n 20 /var/logs/system.log',
                 '<redacted>',
-                'm_van@sys-main:/sanbox> echo $?',
+                'a_gile@sys-main:/sanbox> echo $?',
                 '3',
-                'm_van@sys-main:/sanbox> kill -9 8372',
-                'm_van@sys-main:/sanbox> bash: kill: (8372) - Operation not permitted',
-                'm_van@sys-main:/sanbox> echo "3AB7-8014-0x6C" > /tmp/.session_lock',
-                'm_van@sys-main:/sanbox> exit'
+                'a_gile@sys-main:/sanbox> kill -9 8372',
+                'a_gile@sys-main:/sanbox> bash: kill: (8372) - Operation not permitted',
+                'a_gile@sys-main:/sanbox> echo "3AB7-8014-0x6C" > /tmp/.session_lock',
+                'a_gile@sys-main:/sanbox> exit'
               ].join('\n')
             },
             {
@@ -317,8 +317,8 @@ const FileSystemRoot: INode = {
                   permissionLevel: 1,
                   content: [
                     'HOST=sys-main2',
-                    'TEST_USER=g_chen',
-                    `TEST_PASS=${btoa(gChenPass)}`
+                    'TEST_USER=c_mor',
+                    `TEST_PASS=${btoa(cMorPass)}`
                   ].join('\n'),
                 }
               ]
@@ -612,13 +612,13 @@ export function App() {
           setHistory(prev => [...prev, { type: 'system', text: `Command format: su user password` }]);
           break;
         }
-        if (args[0] === 'm_van' && args[1].toLocaleLowerCase() === '2026_mike') {
+        if (args[0] === 'a_gile' && args[1].toLocaleLowerCase() === '2026_mike') {
           setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
-          setUser({permissionLevel: 1, name: 'm_van'});
+          setUser({permissionLevel: 1, name: 'a_gile'});
         }
-        if (args[0] === 'g_chen' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
+        if (args[0] === 'c_mor' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
           setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
-          setUser({permissionLevel: 2, name: 'g_chen'});
+          setUser({permissionLevel: 2, name: 'c_mor'});
         }
       } break;
       case 'decode': {
