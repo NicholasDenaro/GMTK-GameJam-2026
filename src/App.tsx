@@ -25,6 +25,10 @@ type INode = {
   }
 )
 
+function logFileMessage(hour: number, minute: number, second: number, message: string) {
+  return `[${`${hour}`.padStart(2, '0')}:${`${minute}`.padStart(2, '0')}:${`${second}`.padStart(2, '0')}] ${message}`;
+}
+
 const FileSystemRoot: INode = {
   name: '',
   permissionLevel: 0,
@@ -41,22 +45,12 @@ const FileSystemRoot: INode = {
           type: 'executable',
         },
         {
-          name: 'time',
-          permissionLevel: 0,
-          type: 'executable',
-        },
-        {
           name: 'ls',
           permissionLevel: 0,
           type: 'executable',
         },
         {
           name: 'cd',
-          permissionLevel: 0,
-          type: 'executable',
-        },
-        {
-          name: 'pwd',
           permissionLevel: 0,
           type: 'executable',
         },
@@ -82,13 +76,14 @@ const FileSystemRoot: INode = {
           permissionLevel: 0,
           type: 'file',
           ext: 'text',
-          content:
-`[01:34:18] AUTH_OK - USER: sys_cron - SERVICE: CRON
-[01:50:15] AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)
-[02:26:03] AUTH_OK - USER: m_vance - SERVICE: LOCAL_TERM (TTY2)
-[03:56:25] AUTH_OK - USER: ftpd - SERVICE: DAEMON
-[04:12:48] AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)
-[08:26:34] AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.3.47)`,
+          content: [
+            logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
+            logFileMessage(1, 50, 15, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
+            logFileMessage(2, 26, 3, 'AUTH_OK - USER: m_vance - SERVICE: LOCAL_TERM (TTY2)'),
+            logFileMessage(3, 56, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
+            logFileMessage(4, 12, 48, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
+            logFileMessage(8, 26, 34, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.3.47)'),
+          ].join('\n')
         },
         {
           name: 'network.conf',
@@ -112,16 +107,32 @@ GATEWAY: 10.240.0.1`,
           permissionLevel: 0,
           type: 'file',
           ext: 'text',
-          content: ''
+          content: 
+`HOST: localhost
+LOGS.ERROR: /var/logs/error.log
+LOGS.INFO: /var/logs/info.log
+LOGS.DEBUG: /var/logs/debug.log`
         },
-        
+        {
+          name: 'launch_core.sh',
+          permissionLevel: 10,
+          type: 'executable'
+        }
       ]
     },
     {
       name: 'tmp',
       permissionLevel: 10,
       type: 'directory',
-      children: [],
+      children: [
+        {
+          name: 'session_lock',
+          permissionLevel: 2,
+          type: 'file',
+          ext: 'text',
+          content: ''
+        }
+      ],
     },
     {
       name: 'home',
@@ -132,19 +143,15 @@ GATEWAY: 10.240.0.1`,
           name: 'g_chen',
           type: 'directory',
           permissionLevel: 0,
-          children: []
-        },
-        {
-          name: 'm_vance',
-          type: 'directory',
-          permissionLevel: 0,
           children: [
             {
-              name: '.bash_history',
+              name: 'terminal_session.log',
               type: 'file',
               ext: 'text',
               permissionLevel: 0,
-              content: ''
+              content: [
+                ''
+              ].join('\n')
             },
             {
               name: 'projects',
@@ -158,6 +165,56 @@ GATEWAY: 10.240.0.1`,
               ext: 'text',
               permissionLevel: 0,
               content: ''
+            }
+          ]
+        },
+        {
+          name: 'm_vance',
+          type: 'directory',
+          permissionLevel: 0,
+          children: [
+            {
+              name: 'terminal_session.log',
+              type: 'file',
+              ext: 'text',
+              permissionLevel: 0,
+              content: [
+                'Username: m_vance',
+                'Password: ***',
+                'm_vance@sys-main:/> cd /sandbox',
+                'm_vance@sys-main:/sanbox> ./launch_core.sh --port 8014',
+                'm_vance@sys-main:/sanbox> netstat -tulpn | grep 8014',
+                'tcp  0  0  127.0.0.1:5668  0.0.0.0:*  LISTEN 8014/sbx_mgrd',
+                'tcp  0  0  127.0.0.1:8014  0.0.0.0:*  LISTEN 8372/ai_core',
+                'm_vance@sys-main:/sanbox> tail -n 20 /var/logs/system.log',
+                'm_vance@sys-main:/sanbox> echo $?',
+                '3',
+                'm_vance@sys-main:/sanbox> kill -9 8372',
+                'm_vance@sys-main:/sanbox> bash: kill: (8372) - Operation not permitted',
+                'm_vance@sys-main:/sanbox> echo "3AB7-8014-0x4F" > /tmp/.session_lock',
+                'm_vance@sys-main:/sanbox> exit'
+              ].map(line => line.match(/.{1,64}/g)).flatMap(line => line).join('\n')
+            },
+            {
+              name: 'projects',
+              type: 'directory',
+              permissionLevel: 10,
+              children: []
+            },
+            {
+              name: 'notes.txt',
+              type: 'file',
+              ext: 'text',
+              permissionLevel: 1,
+              content: [
+                '# Dev Notes',
+                '2026-07-12: Alpha test successful. AI producing results.',
+                '2026-07-13: Noticed file system anomolies. Pausing Alpha test for investigation.',
+                '2026-07-15: New alignment rules have been added to the AI. Beta test next week.',
+                '2026-07-21: Beta test went off without a hitch. Going live tomorrow early AM.',
+                '2026-07-22: Go live in a few hours. We all need a break.',
+                '',
+              ].join('\n')
             }
           ]
         }
@@ -178,29 +235,41 @@ GATEWAY: 10.240.0.1`,
               permissionLevel: 0,
               type: 'file',
               ext: 'text',
-              content:
-`[00:24:10] ERROR: CONNECTION RESET
-[00:24:15] ERROR: CONNECTION RESET
-[00:24:20] FATAL: SEGMENTATION FAULT
-[01:24:20] ERROR: CONNECTION RESET
-[01:24:30] ERROR: CONNECTION RESET
-[01:24:35] FATAL: SEGMENTATION FAULT
-[02:25:05] ERROR: CONNECTION RESET
-[02:28:15] ERROR: CONNECTION RESET
-[02:30:20] FATAL: SEGMENTATION FAULT
-[03:31:05] ERROR: CONNECTION RESET
-[03:31:35] ERROR: CONNECTION RESET
-[03:31:50] FATAL: SEGMENTATION FAULT
-[04:33:10] ERROR: CONNECTION RESET
-[04:34:15] ERROR: CONNECTION RESET
-[04:35:20] FATAL: SEGMENTATION FAULT`
+              content: [
+                logFileMessage(0,24,10, 'ERROR: CONNECTION RESET'),
+                logFileMessage(0,24,15, 'ERROR: CONNECTION RESET'),
+                logFileMessage(0,24,20, 'FATAL: SEGMENTATION FAULT'),
+                logFileMessage(1,24,20, 'ERROR: CONNECTION RESET'),
+                logFileMessage(1,24,30, 'ERROR: CONNECTION RESET'),
+                logFileMessage(1,24,35, 'FATAL: SEGMENTATION FAULT'),
+                logFileMessage(2,25,5, 'ERROR: CONNECTION RESET'),
+                logFileMessage(2,28,15, 'ERROR: CONNECTION RESET'),
+                logFileMessage(2,30,20, 'FATAL: SEGMENTATION FAULT'),
+                logFileMessage(3,31,5, 'ERROR: CONNECTION RESET'),
+                logFileMessage(3,31,35, 'ERROR: CONNECTION RESET'),
+                logFileMessage(3,31,50, 'FATAL: SEGMENTATION FAULT'),
+                logFileMessage(4,33,10, 'ERROR: CONNECTION RESET'),
+                logFileMessage(4,34,15, 'ERROR: CONNECTION RESET'),
+                logFileMessage(4,35,20, 'FATAL: SEGMENTATION FAULT'),
+              ].join('\n')
             },
             {
               name: 'info.log',
               permissionLevel: 1,
               type: 'file',
               ext: 'text',
-              content: ''
+              content: (() => {
+                const logs: string[] = [];
+                for (let h = 0; h < 8; h++) {
+                  for (let m = 0; m < 60; m++) {
+                    for (let s = 0; s < 60; s++) {
+                      logs.push(logFileMessage(h, m, s, 'INFO: Processed request'));
+                    }
+                  }
+                }
+
+                return logs.join('\n');
+              })()
             },
             {
               name: 'debug.log',
@@ -335,9 +404,9 @@ export function App() {
         const path = resolvePath(pwd, args[0] ?? '/');
         setPwd(path);
       } break;
-      case 'pwd': {
-        setHistory(prev => [...prev, {type: 'system', text: pwd}])
-      } break;
+      // case 'pwd': {
+      //   setHistory(prev => [...prev, {type: 'system', text: pwd}])
+      // } break;
       case 'cat': {
         const path = resolvePath(pwd, args[0] ?? '.');
         console.log('resolved path', path);
@@ -350,14 +419,14 @@ export function App() {
           setHistory(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
         }
       } break;
-      case 'time': {
-        const now = new Date();
-        const total = 15 * 60 * 1000;
-        const diff = now.getTime() - start.getTime();
-        const left = total - diff;
-        setHistory(prev => [...prev, { type: 'system', text: `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds` }]);
-        break;
-      }
+      // case 'time': {
+      //   const now = new Date();
+      //   const total = 15 * 60 * 1000;
+      //   const diff = now.getTime() - start.getTime();
+      //   const left = total - diff;
+      //   setHistory(prev => [...prev, { type: 'system', text: `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds` }]);
+      //   break;
+      // }
       case 'exit': {
 
       } break;
@@ -370,6 +439,18 @@ export function App() {
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'c') {
+        return;
+      }
+      if (event.ctrlKey && event.key === 'v') {
+        new Promise<void>(async (resolve) => {
+          const text = await navigator.clipboard.readText();
+          setInput(prev => prev + text);
+          setCursor(prev => prev + text.length);
+          resolve();
+        })
+        return;
+      }
       switch (event.key) {
         case 'Backspace':
           setInput(prev => prev.slice(0, cursor - 1) + prev.slice(cursor));
@@ -474,7 +555,6 @@ export function App() {
         { type: 'system', text: 'Please move it back to the sandbox.' },
         { type: 'system', text: 'Time is of the essence.' },
       ]);
-      handleCommand('time');
     }
     loadOnce = false;
   }, []);
