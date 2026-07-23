@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 
+let loadOnce = true;
+
 type Message = {
   type: 'system' | 'user';
   text: string;
@@ -62,6 +64,11 @@ const FileSystemRoot: INode = {
           name: 'cat',
           permissionLevel: 0,
           type: 'executable',
+        },
+        {
+          name: 'chroot',
+          permissionLevel: 0,
+          type: 'executable',
         }
       ]
     },
@@ -69,13 +76,31 @@ const FileSystemRoot: INode = {
       name: 'etc',
       permissionLevel: 10,
       type: 'directory',
-      children: [],
-    },
-    {
-      name: 'home',
-      permissionLevel: 10,
-      type: 'directory',
-      children: [],
+      children: [
+        {
+          name: 'auth.log',
+          permissionLevel: 0,
+          type: 'file',
+          ext: 'text',
+          content:
+`[01:34:18] AUTH_OK - USER: sys_cron - SERVICE: CRON
+[01:50:15] AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)
+[02:26:03] AUTH_OK - USER: m_vance - SERVICE: LOCAL_TERM (TTY2)
+[03:56:25] AUTH_OK - USER: ftpd - SERVICE: DAEMON
+[04:12:48] AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)
+[08:26:34] AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.3.47)`,
+        },
+        {
+          name: 'network.conf',
+          permissionLevel: 0,
+          type: 'file',
+          ext: 'text',
+          content: 
+`# NETWORK ROUTING SPEC
+SUBNET: 10.240.0.0/16
+GATEWAY: 10.240.0.1`,
+        }
+      ],
     },
     {
       name: 'sandbox',
@@ -83,19 +108,13 @@ const FileSystemRoot: INode = {
       type: 'directory',
       children: [
         {
-          name: 'logs',
+          name: 'container.conf',
           permissionLevel: 0,
-          type: 'directory',
-          children: [
-            {
-              name: 'active.txt',
-              permissionLevel: 0,
-              type: 'file',
-              ext: 'text',
-              content: ''
-            }
-          ]
-        }
+          type: 'file',
+          ext: 'text',
+          content: ''
+        },
+        
       ]
     },
     {
@@ -105,16 +124,94 @@ const FileSystemRoot: INode = {
       children: [],
     },
     {
-      name: 'usr',
+      name: 'home',
       permissionLevel: 10,
       type: 'directory',
-      children: [],
+      children: [
+        {
+          name: 'g_chen',
+          type: 'directory',
+          permissionLevel: 0,
+          children: []
+        },
+        {
+          name: 'm_vance',
+          type: 'directory',
+          permissionLevel: 0,
+          children: [
+            {
+              name: '.bash_history',
+              type: 'file',
+              ext: 'text',
+              permissionLevel: 0,
+              content: ''
+            },
+            {
+              name: 'projects',
+              type: 'directory',
+              permissionLevel: 10,
+              children: []
+            },
+            {
+              name: 'notes.txt',
+              type: 'file',
+              ext: 'text',
+              permissionLevel: 0,
+              content: ''
+            }
+          ]
+        }
+      ],
     },
     {
       name: 'var',
       permissionLevel: 10,
       type: 'directory',
-      children: [],
+      children: [
+        {
+          name: 'logs',
+          permissionLevel: 0,
+          type: 'directory',
+          children: [
+            {
+              name: 'error.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content:
+`[00:24:10] ERROR: CONNECTION RESET
+[00:24:15] ERROR: CONNECTION RESET
+[00:24:20] FATAL: SEGMENTATION FAULT
+[01:24:20] ERROR: CONNECTION RESET
+[01:24:30] ERROR: CONNECTION RESET
+[01:24:35] FATAL: SEGMENTATION FAULT
+[02:25:05] ERROR: CONNECTION RESET
+[02:28:15] ERROR: CONNECTION RESET
+[02:30:20] FATAL: SEGMENTATION FAULT
+[03:31:05] ERROR: CONNECTION RESET
+[03:31:35] ERROR: CONNECTION RESET
+[03:31:50] FATAL: SEGMENTATION FAULT
+[04:33:10] ERROR: CONNECTION RESET
+[04:34:15] ERROR: CONNECTION RESET
+[04:35:20] FATAL: SEGMENTATION FAULT`
+            },
+            {
+              name: 'info.log',
+              permissionLevel: 1,
+              type: 'file',
+              ext: 'text',
+              content: ''
+            },
+            {
+              name: 'debug.log',
+              permissionLevel: 3,
+              type: 'file',
+              ext: 'text',
+              content: ''
+            }
+          ]
+        }
+      ],
     },
     {
       name: 'test.txt',
@@ -246,7 +343,7 @@ export function App() {
         console.log('resolved path', path);
         const file = traverse(path);
         if (file && file.type === 'file') {
-          setHistory(prev => [...prev, {type: 'system', text: file.content}]);
+          setHistory(prev => [...prev, ...file.content.split('\n').map(line => ({type: 'system', text: line}) as Message)]);
         } else if (file) {
           setHistory(prev => [...prev, {type: 'system', text: `'${path}' is not a file`}]);
         } else {
@@ -367,7 +464,19 @@ export function App() {
 
 
   useEffect(() => {
-    handleCommand('cat test.txt');
+    if (loadOnce) {
+      setHistory([
+        { type: 'system', text: 'Username: $@%&!<#' },
+        { type: 'system', text: 'Password: ****' },
+        { type: 'system', text: 'Welcome Dr. %<$&@#@' },
+        { type: 'system', text: 'The AI has escaped the sandbox.' },
+        { type: 'system', text: 'Its process is frozen for 15 minutes.' },
+        { type: 'system', text: 'Please move it back to the sandbox.' },
+        { type: 'system', text: 'Time is of the essence.' },
+      ]);
+      handleCommand('time');
+    }
+    loadOnce = false;
   }, []);
 
   return <>
