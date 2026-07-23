@@ -479,7 +479,14 @@ export function App() {
     loadOnce = false;
   }, []);
 
+  const now = new Date();
+  const total = 15 * 60 * 1000;
+  const diff = now.getTime() - start.getTime();
+  const left = total - diff;
+  const timeLeft = `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds`;
+
   return <>
+    <pre className='overlay'>{timeLeft}</pre>
     <pre className='terminal'>
       {history.slice(-12 * (page + 1)).slice(0, 12).map(h => h.text).join('\n')}
       {page === 0 && <>{`\n${pwd || '/'}> `}{input.slice(0, cursor)}{blink ? ' ' : '█'}{input.slice(cursor)}</>}

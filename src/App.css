@@ -33,3 +33,17 @@ pre {
   background-size: 640px 3px;
   z-index: 999;
 }
+
+.overlay {
+  pointer-events: none;
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  z-index: 1;
+  color: #ff2714;
+  background-color: #0d1117;
+  width: fit-content;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+}
