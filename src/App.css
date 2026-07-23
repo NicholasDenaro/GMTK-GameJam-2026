@@ -34,6 +34,16 @@ pre {
   z-index: 999;
 }
 
+.user {
+  color: #39ff14 !important;
+  text-shadow: 0 0 10px #00aa00 !important;
+}
+
+.system {
+  color: #9dc6d8 !important;
+  text-shadow: 0 0 10px #7caec3 !important;
+}
+
 .overlay {
   pointer-events: none;
   position: absolute;

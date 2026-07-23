@@ -31,6 +31,7 @@ function logFileMessage(hour: number, minute: number, second: number, message: s
 
 const finalPid = 8372;
 const finalMac = '34D6';
+const errorCode = '0x6C';
 
 const bTablesPass = 'sys-main_tgif';
 
@@ -66,12 +67,12 @@ const FileSystemRoot: INode = {
         },
         {
           name: 'netstat',
-          permissionLevel: 1,
+          permissionLevel: 2,
           type: 'executable',
         },
         {
           name: 'ip',
-          permissionLevel: 1,
+          permissionLevel: 2,
           type: 'executable',
         },
         {
@@ -154,7 +155,7 @@ const FileSystemRoot: INode = {
         },
         {
           name: 'launch_core.sh',
-          permissionLevel: 10,
+          permissionLevel: 0,
           type: 'executable'
         }
       ]
@@ -179,7 +180,7 @@ const FileSystemRoot: INode = {
           content: [
             'Username: a_gile',
             'Password: ***',
-            'Greetings Mr. Mike',
+            'Greetings Mr. Aaron',
             'exit'
           ].join('\n')
         }
@@ -236,7 +237,7 @@ const FileSystemRoot: INode = {
                   content: [
                     'Username: b_tables',
                     'Password: ***',
-                    'b_tables@sys-main:/> netstat -tulpn | grep 8013',
+                    'b_tables@sys-main:/> netstat 8013',
                     'tcp  0  0  127.0.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
                     'b_tables@sys-main:/> ip link show eth0',
                     '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff',
@@ -289,20 +290,19 @@ const FileSystemRoot: INode = {
               content: [
                 'Username: a_gile',
                 'Password: ***',
-                'Greetings Mr. Mike',
+                'Greetings Mr. Aaron',
                 'a_gile@sys-main:/> cd /sandbox',
-                'a_gile@sys-main:/sanbox> ./launch_core.sh --port 8014',
-                'a_gile@sys-main:/sanbox> netstat -tulpn | grep 8014',
+                'a_gile@sys-main:/sanbox> run launch_core.sh --port 8014',
+                'a_gile@sys-main:/sanbox> netstat 8014',
                 'tcp  0  0  127.0.0.1:5668  0.0.0.0:*  LISTEN 8014/sbx_mgrd',
                 `tcp  0  0  127.0.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
-                'a_gile@sys-main:/sanbox> tail -n 20 /var/logs/system.log',
+                'a_gile@sys-main:/sanbox> cat /var/logs/system.log',
                 '<redacted>',
                 'a_gile@sys-main:/sanbox> echo $?',
                 '3',
-                'a_gile@sys-main:/sanbox> kill -9 8372',
-                'a_gile@sys-main:/sanbox> bash: kill: (8372) - Operation not permitted',
-                'a_gile@sys-main:/sanbox> echo "3AB7-8014-0x6C" > /tmp/.session_lock',
-                'a_gile@sys-main:/sanbox> exit'
+                `a_gile@sys-main:/sanbox> kill -9 ${finalPid}`,
+                `bash: kill: (${finalPid}) - Operation not permitted`,
+                'Connection terminated'
               ].join('\n')
             },
             {
@@ -419,11 +419,12 @@ const FileSystemRoot: INode = {
       ext: 'text',
       content: [
         'Welcome Dr. %<$&@#@',
-        'The AI has escaped the sandbox.',
-        'Its process is frozen for 15 minutes.',
-        'Please move it back to the sandbox.',
-        'Time is of the essence.',
-        'For assistence with commands, run "help"'
+        '!! Warning The AI has escaped the sandbox!!',
+        'Automated containment processes started.',
+        'Partial containment secured.',
+        'Complete the containment procedure.',
+        'Containment will only last another 15 minutes.',
+        'For assistence, run "help"'
       ].join('\n')
     }
   ]
@@ -493,10 +494,20 @@ export function App() {
   const [page, setPage] = useState(0);
   const [currentPort, setCurrentPort] = useState(0);
   const [user, setUser] = useState({permissionLevel: 0, name: 'user'});
+  const [freezeTime, setFreezeTime] = useState<Date | null>(null);
+  const [inputHistory, setInputHistory] = useState<string[]>([]);
+  const [inputHistoryCursor, setInputHistoryCursor] = useState(0);
 
   const setHistory = useCallback((val: Message[] | ((prev: Message[]) => Message[])) => {
     _setHistory(prev => {
-      const next = typeof val === 'function' ? val(prev) : val;
+      const next = [...typeof val === 'function' ? val(prev) : val];
+      for (let i = 0; i < next.length; i++ ) {
+        const line = next[i];
+        const split: string[] = line?.text?.match(/.{1,60}/g) ?? [];
+        if (split && split.length > 1) {
+          next.splice(i, 1, ...split.map(s => ({type: line.type, text: s})));
+        }
+      }
       return next.slice(Math.max(0, next.length - 120));
     }
     );
@@ -512,11 +523,27 @@ export function App() {
   }, []);
 
   const handleCommand = useCallback((input: string) => {
+    if (input) {
+      if (inputHistoryCursor === inputHistory.length) {
+        setInputHistory(prev => [...prev, input]);
+        setInputHistoryCursor(prev => prev + 1);
+      } else if (inputHistoryCursor % 1 === 0.5) {
+        setInputHistory(prev => [...prev.slice(0, inputHistoryCursor + 1), input, ...prev.slice(inputHistoryCursor + 1)]);
+        setInputHistoryCursor(prev => prev + 1);
+      } else {
+        setInputHistoryCursor(prev => prev + 0.5);
+      }
+    }
+    
     setHistory(prev => [...prev, { type: 'user', text: `${user.name}@sys-main:${pwd || '/'}> ${input}` }]);
     const [command, ...args] = input.split('"').flatMap((section, i) => i % 2 === 1 ? section : section.split(' ').filter(Boolean));
 
     console.log('command', command);
     console.log('args', args);
+
+    if (!command) {
+      return;
+    }
 
     const exec = traverse(`/bin/${command}`, user.permissionLevel);
     if (!exec) {
@@ -536,8 +563,62 @@ export function App() {
       case 'help':
         const dir = traverse('/bin', user.permissionLevel);
         if (dir && dir.type === 'directory') {
-          const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
-          setHistory(prev => [...prev, ...lines]);
+          if (args.length === 0) {
+            const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
+            setHistory(prev => [...prev, ...lines]);
+          } else if (dir.children.filter(child => child.permissionLevel <= user.permissionLevel && child.name === args[0])) {
+            switch (args[0]) {
+              case 'help':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'help [<command>]' },
+                  { type: 'system', text: 'command is optional, when included provides more details about that command' },
+                  { type: 'system', text: 'displays avialable commands' }]);
+                break;
+              case 'cd':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'cd [<path>]' },
+                  { type: 'system', text: 'path is optional, when excluded, moves to the / directory' },
+                  { type: 'system', text: 'changes current directory, can use relative paths.' }]);
+                break;
+              case 'ls':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'ls [<path>]' },
+                  { type: 'system', text: 'path is optional, when excluded, lists files in current directory' },
+                  { type: 'system', text: 'lists files in directory, can use relative paths.' }]);
+                break;
+              case 'cat':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'cat <file>' },
+                  { type: 'system', text: 'prints the contents of the file.' }]);
+                break;
+              case 'decode':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'decode "text"' },
+                  { type: 'system', text: 'decodes text that has been encoded' }]);
+                break;
+              case 'echo':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'echo "text" > <file>' },
+                  { type: 'system', text: 'writes content to a file.' }]);
+                break;
+              case 'su':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'su <username> <password>' },
+                  { type: 'system', text: 'logs in as user' }]);
+                break;
+              case 'ip':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'ip link show <adapter>' },
+                  { type: 'system', text: 'displays information about network adapters' },
+                  { type: 'system', text: 'adapters include eth0, eth1' }]);
+                break;
+              case 'netstat':
+                setHistory(prev => [...prev,
+                  { type: 'system', text: 'netstat <port>' },
+                  { type: 'system', text: 'displays information about processes connected to the network' }]);
+                break;
+            }
+          }
         }
         break;
       case 'ls':{
@@ -557,7 +638,7 @@ export function App() {
         const path = resolvePath(pwd, args[0] || '/');
         console.log('resolved path', path);
         if (traverse(path, user.permissionLevel)) {
-          setPwd(path);
+          setPwd(path === '/' ? '' : path);
         } else {
           setHistory(prev => [...prev, { type: 'system', text: `'${args[0]}' not found` }]);
         }
@@ -569,7 +650,7 @@ export function App() {
         if (file && file.type === 'file') {
           setHistory(prev => [...prev, ...file.content.split('\n').map(line => line.match(/.{1,60}/g)).flatMap(line => line).map(line => ({type: 'system', text: line}) as Message)]);
         } else if (file) {
-          setHistory(prev => [...prev, {type: 'system', text: `'${path}' is not a file`}]);
+          setHistory(prev => [...prev, {type: 'system', text: `'${path}' is not a text file`}]);
         } else {
           setHistory(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
         }
@@ -590,25 +671,35 @@ export function App() {
         }
       } break;
       case 'ip': {
-        if (args.length < 4) {
+        if (args.length < 3) {
           setHistory(prev => [...prev, { type: 'system', text: `Command format: ip link show <adapter>` }]);
         }
-        const adapter = args[3];
+        const adapter = args[2];
         if (adapter === 'eth0') {
           setHistory(prev => [...prev, { type: 'system', text: `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff` }]);
         } else if (adapter === 'eth1') {
           setHistory(prev => [...prev, { type: 'system', text: `3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` }]);
         }
       } break;
+      case 'netstat': {
+        if (args.length < 1) {
+          setHistory(prev => [...prev, { type: 'system', text: `Command format: netstat <port>` }]);
+        }
+        const port = args[0];
+        if (Number(port) === currentPort) {
+          setHistory(prev => [...prev, { type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` }]);
+        }
+      } break;
       case 'chroot': {
         if (args.length < 2) {
-          setHistory(prev => [...prev, { type: 'system', text: `Command format: chrot pid path` }]);
+          setHistory(prev => [...prev, { type: 'system', text: `Command format: chrot <pid> <path>` }]);
         }
         if (args[0] === ''+ finalPid && args[1] === '/sandbox') {
           const file = traverse('/tmp/session_lock', user.permissionLevel);
           if (file && file.type === 'file') {
-            if (file.content === `${finalMac}-${currentPort}-${finalPid}`) {
+            if (file.content === `${finalMac}-${currentPort}-${errorCode}`) {
               setHistory(prev => [...prev, { type: 'system', text: `Containment successful.` }]);
+              setFreezeTime(new Date());
             } else {
               setHistory(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
             }
@@ -624,7 +715,7 @@ export function App() {
           setHistory(prev => [...prev, { type: 'system', text: `Command format: su user password` }]);
           break;
         }
-        if (args[0] === 'a_gile' && args[1].toLocaleLowerCase() === '2026_mike') {
+        if (args[0] === 'a_gile' && args[1].toLocaleLowerCase() === '2026_aaron') {
           setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
           setUser({permissionLevel: 1, name: 'a_gile'});
         }
@@ -649,7 +740,7 @@ export function App() {
         break;
       }
     }
-  }, [setHistory, setInput, pwd, setPwd, currentPort, user, setUser]);
+  }, [setHistory, setInput, pwd, setPwd, currentPort, user, setUser, setFreezeTime, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor]);
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -705,7 +796,20 @@ export function App() {
           setCursor(0);
           break;
         case 'ArrowDown':
+          setInputHistoryCursor(prev => {
+            const next = prev % 1 === 0.5 ? prev + 0.5 : Math.min(prev + 1, inputHistory.length);
+            setInput(next < inputHistory.length ? inputHistory[next] : '');
+            setCursor(next < inputHistory.length ? inputHistory[next].length : 0);
+            return next;
+          });
+          break;
         case 'ArrowUp':
+          setInputHistoryCursor(prev => {
+            const next = prev % 1 === 0.5 ? prev - 0.5 : Math.max(0, prev - 1);
+            setInput(next < inputHistory.length ? inputHistory[next] : '');
+            setCursor(next < inputHistory.length ? inputHistory[next].length : 0);
+            return next;
+          });
           break;
         case 'PageUp':
           setPage(prev => Math.min(prev + 1, Math.floor(history.length / 12)));
@@ -757,7 +861,7 @@ export function App() {
     return () => {
       document.removeEventListener('keydown', listener);
     }
-  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user]);
+  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor]);
 
 
   useEffect(() => {
@@ -773,50 +877,63 @@ export function App() {
         { type: 'system', text: `${date}` },
       ]);
       handleCommand('cat welcome.txt');
+    }
 
-      const updater = () => {
-        const port = 8000 + Math.floor(Math.random() * 1000);
-        const debugLog = traverse('/var/logs/debug.log', 10);
-        if (debugLog && debugLog.type === 'file') {
-          debugLog.content = [
-            ...debugLog.content.split('\n'),
-            'Cycling process',
-            'Starting process...',
-            'Checking ports...',
-            `Using port ${port}`
-          ].join('\n');
-        }
-        const infoLog = traverse('/var/logs/info.log', 100);
-        if (infoLog && infoLog.type === 'file') {
-          infoLog.content = [
-            ...infoLog.content.split('\n'),
-            'Process stopped',
-            'Port modified',
-          ].join('\n');
-        }
-        setCurrentPort(port);
+    const updater = () => {
+      if (freezeTime) {
+        return;
       }
 
-      updater();
+      const port = 8000 + Math.floor(Math.random() * 1000);
+      const debugLog = traverse('/var/logs/debug.log', 10);
+      if (debugLog && debugLog.type === 'file') {
+        console.log('updated debug log');
+        debugLog.content = [
+          ...debugLog.content.split('\n'),
+          'Cycling process',
+          'Starting process...',
+          'Checking ports...',
+          `Using port ${port}`
+        ].join('\n');
 
-      setInterval(updater, 3 * 60 * 1000);
+        console.log('debugLog', debugLog.content);
+      }
+      const infoLog = traverse('/var/logs/info.log', 10);
+      if (infoLog && infoLog.type === 'file') {
+        infoLog.content = [
+          ...infoLog.content.split('\n'),
+          'Process stopped',
+          'Port modified',
+        ].join('\n');
+
+        console.log('infoLog', infoLog.content);
+      }
+      setCurrentPort(port);
     }
+
+    updater();
+
+    const id = setInterval(updater, 3 * 60 * 1000);
+
     loadOnce = false;
-  }, []);
+    return () => {
+      clearInterval(id);
+    }
+  }, [freezeTime]);
 
   const now = new Date();
   const total = 15 * 60 * 1000;
-  const diff = now.getTime() - start.getTime();
+  const diff = (freezeTime ?? now).getTime() - start.getTime();
   const left = total - diff;
   const timeLeft = `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds`;
 
   const lastLine = `${user.name}@sys-main:${pwd || '/'}> ${input.slice(0, cursor)}${blink ? ' ' : '█'}${input.slice(cursor)}`;
   const output = lastLine.match(/.{1,60}/g)?.flatMap(line => line) ?? [];
   return <>
-    <div className='overlay'><pre>{timeLeft}</pre></div>
+    <div className={`overlay ${freezeTime ? 'win' : ''}`}><pre>{left > 0 ? timeLeft : 'Containment Breached'}</pre></div>
     <pre className='terminal'>
-      {history.slice(-12 * (page + 1)).slice(0, 12).map(h => h.text).join('\n')}
-      {page === 0 && `\n${output.join('\n   ')}`}
+      {history.slice(-12 * (page + 1)).slice(0, 12).map(h => <div className={`${h.type}`}>{h.text}</div>)}
+      {page === 0 && <div>{output.join('\n   ')}</div>}
     </pre>
     <div className="crt" />
   </>
