@@ -110,7 +110,7 @@ const FileSystemRoot: INode = {
             logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
             logFileMessage(1, 50, 15, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
             logFileMessage(2, 12, 48, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
-            logFileMessage(3, 26, 3, 'AUTH_OK - USER: m_vance - SERVICE: LOCAL_TERM (TTY2)'),
+            logFileMessage(3, 26, 3, 'AUTH_OK - USER: m_van - SERVICE: LOCAL_TERM (TTY2)'),
             logFileMessage(3, 56, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
           ].join('\n')
         },
@@ -119,17 +119,19 @@ const FileSystemRoot: INode = {
           permissionLevel: 0,
           type: 'file',
           ext: 'text',
-          content: 'System wide password reset. Default password <year>_<lastname>'
+          content: '2026-07-18: System wide password reset. Default password "<year>_<firstname>". Please reset your passwords immediately.'
         },
         {
           name: 'network.conf',
           permissionLevel: 0,
           type: 'file',
           ext: 'text',
-          content: 
-`# NETWORK ROUTING SPEC
-SUBNET: 10.240.0.0/16
-GATEWAY: 10.240.0.1`,
+          content: [
+            `# NETWORK ROUTING SPEC`,
+            `SUBNET: 10.240.0.0/16`,
+            `GATEWAY: 10.240.0.1`
+          ].join('\n')
+,
         }
       ],
     },
@@ -143,11 +145,12 @@ GATEWAY: 10.240.0.1`,
           permissionLevel: 0,
           type: 'file',
           ext: 'text',
-          content: 
-`HOST: localhost
-LOGS.ERROR: /var/logs/error.log
-LOGS.INFO: /var/logs/info.log
-LOGS.DEBUG: /var/logs/debug.log`
+          content: [
+            `HOST: localhost`,
+            `LOGS.ERROR: /var/logs/error.log`,
+            `LOGS.INFO: /var/logs/info.log`,
+            `LOGS.DEBUG: /var/logs/debug.log`
+          ].join('\n')
         },
         {
           name: 'launch_core.sh',
@@ -167,6 +170,18 @@ LOGS.DEBUG: /var/logs/debug.log`
           type: 'file',
           ext: 'text',
           content: '3AB7-8014-0x6C'
+        },
+        {
+          name: 'terminal_session.log',
+          permissionLevel: 0,
+          type: 'file',
+          ext: 'text',
+          content: [
+            'Username: m_van',
+            'Password: ***',
+            'Greetings Mr. Mike',
+            'exit'
+          ].join('\n')
         }
       ],
     },
@@ -262,7 +277,7 @@ LOGS.DEBUG: /var/logs/debug.log`
           ]
         },
         {
-          name: 'm_vance',
+          name: 'm_van',
           type: 'directory',
           permissionLevel: 0,
           children: [
@@ -272,21 +287,22 @@ LOGS.DEBUG: /var/logs/debug.log`
               ext: 'text',
               permissionLevel: 1,
               content: [
-                'Username: m_vance',
+                'Username: m_van',
                 'Password: ***',
-                'm_vance@sys-main:/> cd /sandbox',
-                'm_vance@sys-main:/sanbox> ./launch_core.sh --port 8014',
-                'm_vance@sys-main:/sanbox> netstat -tulpn | grep 8014',
+                'Greetings Mr. Mike',
+                'm_van@sys-main:/> cd /sandbox',
+                'm_van@sys-main:/sanbox> ./launch_core.sh --port 8014',
+                'm_van@sys-main:/sanbox> netstat -tulpn | grep 8014',
                 'tcp  0  0  127.0.0.1:5668  0.0.0.0:*  LISTEN 8014/sbx_mgrd',
                 `tcp  0  0  127.0.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
-                'm_vance@sys-main:/sanbox> tail -n 20 /var/logs/system.log',
+                'm_van@sys-main:/sanbox> tail -n 20 /var/logs/system.log',
                 '<redacted>',
-                'm_vance@sys-main:/sanbox> echo $?',
+                'm_van@sys-main:/sanbox> echo $?',
                 '3',
-                'm_vance@sys-main:/sanbox> kill -9 8372',
-                'm_vance@sys-main:/sanbox> bash: kill: (8372) - Operation not permitted',
-                'm_vance@sys-main:/sanbox> echo "3AB7-8014-0x6C" > /tmp/.session_lock',
-                'm_vance@sys-main:/sanbox> exit'
+                'm_van@sys-main:/sanbox> kill -9 8372',
+                'm_van@sys-main:/sanbox> bash: kill: (8372) - Operation not permitted',
+                'm_van@sys-main:/sanbox> echo "3AB7-8014-0x6C" > /tmp/.session_lock',
+                'm_van@sys-main:/sanbox> exit'
               ].join('\n')
             },
             {
@@ -395,17 +411,18 @@ LOGS.DEBUG: /var/logs/debug.log`
         'Its process is frozen for 15 minutes.',
         'Please move it back to the sandbox.',
         'Time is of the essence.',
+        'For assistence with commands, run "help"'
       ].join('\n')
     }
   ]
 };
 
-function traverse(pwd: string) {
-  if (pwd === '') {
+function traverse(path: string, permissionLevel: number) {
+  if (path === '' || path==='/') {
     return FileSystemRoot;
   }
 
-  const dirs = pwd.slice(1).split('/');
+  const dirs = path.slice(1).split('/');
   let node: INode = FileSystemRoot;
   for (let dir of dirs) {
     if (node.type !== 'directory') {
@@ -413,7 +430,7 @@ function traverse(pwd: string) {
     }
 
     const child = node.children.find(n => n.name === dir);
-    if (!child) {
+    if (!child || child.permissionLevel > permissionLevel) {
       return null;
     }
     node = child;
@@ -428,7 +445,8 @@ function resolvePath(currentDirectory: string, relative: string) {
   }
 
   if (relative[0] === '/') {
-    return relative;
+    currentDirectory = '/' + relative.split('/')[1];
+    relative = relative.split('/').slice(2).join('/');
   }
 
   const dir = currentDirectory.split('/');
@@ -447,10 +465,6 @@ function resolvePath(currentDirectory: string, relative: string) {
     } else {
       dir.push(p);
     }
-  }
-
-  if (dir.length === 0) {
-    return '/';
   }
 
   return dir.join('/');
@@ -492,7 +506,7 @@ export function App() {
     console.log('command', command);
     console.log('args', args);
 
-    const exec = traverse(`/bin/${command}`);
+    const exec = traverse(`/bin/${command}`, user.permissionLevel);
     if (!exec) {
       setHistory(prev => [...prev, { type: 'system', text: `Command '${command}' not found` }]);
       return;
@@ -508,16 +522,16 @@ export function App() {
 
     switch (command) {
       case 'help':
-        const dir = traverse('/bin');
+        const dir = traverse('/bin', user.permissionLevel);
         if (dir && dir.type === 'directory') {
           const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
           setHistory(prev => [...prev, ...lines]);
         }
         break;
       case 'ls':{
-        const path = resolvePath(pwd, args[0] ?? '.');
+        const path = resolvePath(pwd, args[0] || '.');
         console.log('resolved path', path);
-        const dir = traverse(path);
+        const dir = traverse(path, user.permissionLevel);
         if (dir && dir.type === 'directory') {
           const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
           setHistory(prev => [...prev, ...lines]);
@@ -528,13 +542,18 @@ export function App() {
         }
       } break;
       case 'cd': {
-        const path = resolvePath(pwd, args[0] ?? '/');
-        setPwd(path);
+        const path = resolvePath(pwd, args[0] || '/');
+        console.log('resolved path', path);
+        if (traverse(path, user.permissionLevel)) {
+          setPwd(path);
+        } else {
+          setHistory(prev => [...prev, { type: 'system', text: `'${args[0]}' not found` }]);
+        }
       } break;
       case 'cat': {
         const path = resolvePath(pwd, args[0] ?? '.');
         console.log('resolved path', path);
-        const file = traverse(path);
+        const file = traverse(path, user.permissionLevel);
         if (file && file.type === 'file') {
           setHistory(prev => [...prev, ...file.content.split('\n').map(line => line.match(/.{1,60}/g)).flatMap(line => line).map(line => ({type: 'system', text: line}) as Message)]);
         } else if (file) {
@@ -549,7 +568,7 @@ export function App() {
           break;
         }
         const filePath = args[2];
-        const file = traverse(resolvePath(pwd, filePath));
+        const file = traverse(resolvePath(pwd, filePath), user.permissionLevel);
         if (file && file.type === 'file') {
           if (file.name !== 'session_lock') {
             setHistory(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
@@ -574,7 +593,7 @@ export function App() {
           setHistory(prev => [...prev, { type: 'system', text: `Command format: chrot pid path` }]);
         }
         if (args[0] === ''+ finalPid && args[1] === '/sandbox') {
-          const file = traverse('/tmp/session_lock');
+          const file = traverse('/tmp/session_lock', user.permissionLevel);
           if (file && file.type === 'file') {
             if (file.content === `${finalMac}-${currentPort}-${finalPid}`) {
               setHistory(prev => [...prev, { type: 'system', text: `Containment successful.` }]);
@@ -593,11 +612,11 @@ export function App() {
           setHistory(prev => [...prev, { type: 'system', text: `Command format: su user password` }]);
           break;
         }
-        if (args[0] === 'm_vance' && args[1] === '2026_vance') {
+        if (args[0] === 'm_van' && args[1].toLocaleLowerCase() === '2026_mike') {
           setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
-          setUser({permissionLevel: 1, name: 'm_vance'});
+          setUser({permissionLevel: 1, name: 'm_van'});
         }
-        if (args[0] === 'g_chen' && args[1] === 'sys-main_tgif') {
+        if (args[0] === 'g_chen' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
           setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
           setUser({permissionLevel: 2, name: 'g_chen'});
         }
@@ -687,11 +706,13 @@ export function App() {
           const segment = segments.at(-1) ?? '';
           const parts = segment.split('/');
           console.log('segment', segment, 'parts', parts);
-          const builtPath = [pwd, ...parts.slice(0, -1)].join('/');
+          console.log('parts.slice(0, -1).join(\'/\')', parts.slice(0, -1).join('/'));
+          console.log('pwd', pwd);
+          const builtPath = resolvePath(pwd, parts.slice(0, -1).join('/'));
           console.log('builtPath', builtPath);
-          const current = traverse(builtPath);
+          const current = traverse(builtPath, user.permissionLevel);
           if (current?.type === 'directory') {
-            const found = current.children.filter(child => child.name.startsWith(parts.at(-1) ?? ''));
+            const found = current.children.filter(child => child.permissionLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
             if (found.length === 1) {
               const text = [...segments.slice(0, -1), [...parts.slice(0, -1), found[0].name].join('/')].join(' ');
               setInput(text);
@@ -699,9 +720,9 @@ export function App() {
             }
             break;
           }
-          const dir = traverse('/bin');
+          const dir = traverse('/bin', user.permissionLevel);
           if (dir?.type === 'directory') {
-            const found = dir.children.filter(child => child.name.startsWith(segment));
+            const found = dir.children.filter(child => child.permissionLevel <= user.permissionLevel).filter(child => child.name.startsWith(segment));
             if (found.length === 1) {
               const text = [...segments.slice(0, -1), found[0].name].join(' ');
               setInput(text);
@@ -724,7 +745,7 @@ export function App() {
     return () => {
       document.removeEventListener('keydown', listener);
     }
-  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage]);
+  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user]);
 
 
   useEffect(() => {
@@ -743,7 +764,7 @@ export function App() {
 
       const updater = () => {
         const port = 8000 + Math.floor(Math.random() * 1000);
-        const debugLog = traverse('/var/logs/debug.log');
+        const debugLog = traverse('/var/logs/debug.log', 10);
         if (debugLog && debugLog.type === 'file') {
           debugLog.content = [
             ...debugLog.content.split('\n'),
@@ -753,7 +774,7 @@ export function App() {
             `Using port ${port}`
           ].join('\n');
         }
-        const infoLog = traverse('/var/logs/info.log');
+        const infoLog = traverse('/var/logs/info.log', 100);
         if (infoLog && infoLog.type === 'file') {
           infoLog.content = [
             ...infoLog.content.split('\n'),
