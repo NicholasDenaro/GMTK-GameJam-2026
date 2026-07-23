@@ -37,13 +37,21 @@ pre {
 .overlay {
   pointer-events: none;
   position: absolute;
-  top: 1em;
-  right: 1em;
+  top: 0;
+  left: 0;
   z-index: 1;
   color: #ff2714;
-  background-color: #0d1117;
-  width: fit-content;
+  text-shadow: 0 0 10px #a4271b;
+  width: 640px;
   font-size: 16px;
   line-height: 1.5;
   letter-spacing: 0.5px;
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.overlay > * {
+  background-color: #0d1117;
+  padding-right: 1em;
+  padding-top: 1em;
 }

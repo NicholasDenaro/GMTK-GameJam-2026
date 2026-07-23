@@ -29,6 +29,11 @@ function logFileMessage(hour: number, minute: number, second: number, message: s
   return `[${`${hour}`.padStart(2, '0')}:${`${minute}`.padStart(2, '0')}:${`${second}`.padStart(2, '0')}] ${message}`;
 }
 
+const finalPid = 8372;
+const finalMac = '34D6';
+
+const gChenPass = 'sys-main_tgif';
+
 const FileSystemRoot: INode = {
   name: '',
   permissionLevel: 0,
@@ -60,15 +65,40 @@ const FileSystemRoot: INode = {
           type: 'executable',
         },
         {
-          name: 'chroot',
+          name: 'netstat',
+          permissionLevel: 1,
+          type: 'executable',
+        },
+        {
+          name: 'ip',
+          permissionLevel: 1,
+          type: 'executable',
+        },
+        {
+          name: 'echo',
           permissionLevel: 0,
+          type: 'executable'
+        },
+        {
+          name: 'decode',
+          permissionLevel: 1,
+          type: 'executable'
+        },
+        {
+          name: 'su',
+          permissionLevel: 0,
+          type: 'executable'
+        },
+        {
+          name: 'chroot',
+          permissionLevel: 2,
           type: 'executable',
         }
       ]
     },
     {
       name: 'etc',
-      permissionLevel: 10,
+      permissionLevel: 0,
       type: 'directory',
       children: [
         {
@@ -79,11 +109,17 @@ const FileSystemRoot: INode = {
           content: [
             logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
             logFileMessage(1, 50, 15, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
-            logFileMessage(2, 26, 3, 'AUTH_OK - USER: m_vance - SERVICE: LOCAL_TERM (TTY2)'),
+            logFileMessage(2, 12, 48, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
+            logFileMessage(3, 26, 3, 'AUTH_OK - USER: m_vance - SERVICE: LOCAL_TERM (TTY2)'),
             logFileMessage(3, 56, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
-            logFileMessage(4, 12, 48, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.1.12)'),
-            logFileMessage(8, 26, 34, 'AUTH_OK - USER: g_chen - SERVICE: SSH (10.240.3.47)'),
           ].join('\n')
+        },
+        {
+          name: 'notice.txt',
+          permissionLevel: 0,
+          type: 'file',
+          ext: 'text',
+          content: 'System wide password reset. Default password <year>_<lastname>'
         },
         {
           name: 'network.conf',
@@ -122,7 +158,7 @@ LOGS.DEBUG: /var/logs/debug.log`
     },
     {
       name: 'tmp',
-      permissionLevel: 10,
+      permissionLevel: 0,
       type: 'directory',
       children: [
         {
@@ -130,13 +166,13 @@ LOGS.DEBUG: /var/logs/debug.log`
           permissionLevel: 2,
           type: 'file',
           ext: 'text',
-          content: ''
+          content: '3AB7-8014-0x6C'
         }
       ],
     },
     {
       name: 'home',
-      permissionLevel: 10,
+      permissionLevel: 0,
       type: 'directory',
       children: [
         {
@@ -145,26 +181,83 @@ LOGS.DEBUG: /var/logs/debug.log`
           permissionLevel: 0,
           children: [
             {
-              name: 'terminal_session.log',
-              type: 'file',
-              ext: 'text',
-              permissionLevel: 0,
-              content: [
-                ''
-              ].join('\n')
+              name: 'archived',
+              type: 'directory',
+              permissionLevel: 1,
+              children: [
+                {
+                  name: 'terminal_session-2026-07-12.log',
+                  type: 'file',
+                  ext: 'text',
+                  permissionLevel: 2,
+                  content: ''
+                },
+                {
+                  name: 'terminal_session-2026-07-13.log',
+                  type: 'file',
+                  ext: 'text',
+                  permissionLevel: 2,
+                  content: ''
+                },
+                {
+                  name: 'terminal_session-2026-07-14.log',
+                  type: 'file',
+                  ext: 'text',
+                  permissionLevel: 2,
+                  content: ''
+                },
+                {
+                  name: 'terminal_session-2026-07-15.log',
+                  type: 'file',
+                  ext: 'text',
+                  permissionLevel: 2,
+                  content: ''
+                },
+                {
+                  name: 'terminal_session-2026-07-17.log',
+                  type: 'file',
+                  ext: 'text',
+                  permissionLevel: 2,
+                  content: [
+                    'Username: g_chen',
+                    'Password: ***',
+                    'g_chen@sys-main:/> netstat -tulpn | grep 8013',
+                    'tcp  0  0  127.0.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
+                    'g_chen@sys-main:/> ip link show eth0',
+                    '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff',
+                    'g_chen@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
+                    'g_chen@sys-main:/> chroot 4537 /sandbox',
+                    'g_chen@sys-main:/> echo "Containment Successful" > ~/notes.txt',
+                    'g_chen@sys-main:/> exit'
+                  ].join('\n')
+                },
+                {
+                  name: 'terminal_session-2026-07-20.log',
+                  type: 'file',
+                  ext: 'text',
+                  permissionLevel: 2,
+                  content: ''
+                },
+              ]
             },
             {
               name: 'projects',
               type: 'directory',
-              permissionLevel: 10,
+              permissionLevel: 2,
               children: []
             },
             {
               name: 'notes.txt',
               type: 'file',
               ext: 'text',
-              permissionLevel: 0,
-              content: ''
+              permissionLevel: 2,
+              content: [
+                '# Op Notes',
+                '2026-07-13: File system anomoly detected. Developers alerted',
+                '2026-07-17: Containment Successful',
+                '2026-07-20: Alignment protocol in check',
+                '2026-07-21: Testing complete. Release approved.',
+              ].join('\n')
             }
           ]
         },
@@ -177,7 +270,7 @@ LOGS.DEBUG: /var/logs/debug.log`
               name: 'terminal_session.log',
               type: 'file',
               ext: 'text',
-              permissionLevel: 0,
+              permissionLevel: 1,
               content: [
                 'Username: m_vance',
                 'Password: ***',
@@ -185,21 +278,34 @@ LOGS.DEBUG: /var/logs/debug.log`
                 'm_vance@sys-main:/sanbox> ./launch_core.sh --port 8014',
                 'm_vance@sys-main:/sanbox> netstat -tulpn | grep 8014',
                 'tcp  0  0  127.0.0.1:5668  0.0.0.0:*  LISTEN 8014/sbx_mgrd',
-                'tcp  0  0  127.0.0.1:8014  0.0.0.0:*  LISTEN 8372/ai_core',
+                `tcp  0  0  127.0.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
                 'm_vance@sys-main:/sanbox> tail -n 20 /var/logs/system.log',
+                '<redacted>',
                 'm_vance@sys-main:/sanbox> echo $?',
                 '3',
                 'm_vance@sys-main:/sanbox> kill -9 8372',
                 'm_vance@sys-main:/sanbox> bash: kill: (8372) - Operation not permitted',
-                'm_vance@sys-main:/sanbox> echo "3AB7-8014-0x4F" > /tmp/.session_lock',
+                'm_vance@sys-main:/sanbox> echo "3AB7-8014-0x6C" > /tmp/.session_lock',
                 'm_vance@sys-main:/sanbox> exit'
-              ].map(line => line.match(/.{1,64}/g)).flatMap(line => line).join('\n')
+              ].join('\n')
             },
             {
               name: 'projects',
               type: 'directory',
-              permissionLevel: 10,
-              children: []
+              permissionLevel: 1,
+              children: [
+                {
+                  name: '.env',
+                  type: 'file',
+                  ext: 'text',
+                  permissionLevel: 1,
+                  content: [
+                    'HOST=sys-main2',
+                    'TEST_USER=g_chen',
+                    `TEST_PASS=${btoa(gChenPass)}`
+                  ].join('\n'),
+                }
+              ]
             },
             {
               name: 'notes.txt',
@@ -213,7 +319,6 @@ LOGS.DEBUG: /var/logs/debug.log`
                 '2026-07-15: New alignment rules have been added to the AI. Beta test next week.',
                 '2026-07-21: Beta test went off without a hitch. Going live tomorrow early AM.',
                 '2026-07-22: Go live in a few hours. We all need a break.',
-                '',
               ].join('\n')
             }
           ]
@@ -222,7 +327,7 @@ LOGS.DEBUG: /var/logs/debug.log`
     },
     {
       name: 'var',
-      permissionLevel: 10,
+      permissionLevel: 0,
       type: 'directory',
       children: [
         {
@@ -236,21 +341,26 @@ LOGS.DEBUG: /var/logs/debug.log`
               type: 'file',
               ext: 'text',
               content: [
-                logFileMessage(0,24,10, 'ERROR: CONNECTION RESET'),
-                logFileMessage(0,24,15, 'ERROR: CONNECTION RESET'),
-                logFileMessage(0,24,20, 'FATAL: SEGMENTATION FAULT'),
-                logFileMessage(1,24,20, 'ERROR: CONNECTION RESET'),
-                logFileMessage(1,24,30, 'ERROR: CONNECTION RESET'),
-                logFileMessage(1,24,35, 'FATAL: SEGMENTATION FAULT'),
-                logFileMessage(2,25,5, 'ERROR: CONNECTION RESET'),
-                logFileMessage(2,28,15, 'ERROR: CONNECTION RESET'),
-                logFileMessage(2,30,20, 'FATAL: SEGMENTATION FAULT'),
-                logFileMessage(3,31,5, 'ERROR: CONNECTION RESET'),
-                logFileMessage(3,31,35, 'ERROR: CONNECTION RESET'),
-                logFileMessage(3,31,50, 'FATAL: SEGMENTATION FAULT'),
-                logFileMessage(4,33,10, 'ERROR: CONNECTION RESET'),
-                logFileMessage(4,34,15, 'ERROR: CONNECTION RESET'),
-                logFileMessage(4,35,20, 'FATAL: SEGMENTATION FAULT'),
+                '...',
+                logFileMessage(0,24,10, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(0,24,15, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(0,24,20, 'FATAL: SEGMENTATION FAULT 0x01'),
+                logFileMessage(1,24,20, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(1,24,30, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(1,24,35, 'FATAL: SEGMENTATION FAULT 0x01'),
+                logFileMessage(2,25,10, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(2,25,20, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(2,25,25, 'FATAL: SEGMENTATION FAULT 0x01'),
+                logFileMessage(3,25,5, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(3,28,15, 'ERROR: CONNECTION RESET 0x6C'),
+                logFileMessage(3,30,20, 'FATAL: SEGMENTATION FAULT 0x02'),
+                logFileMessage(4,31,5, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(4,31,35, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(4,31,50, 'FATAL: SEGMENTATION FAULT 0x01'),
+                logFileMessage(5,33,10, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(5,34,15, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(5,35,20, 'FATAL: SEGMENTATION FAULT 0x01'),
+                '...'
               ].join('\n')
             },
             {
@@ -258,36 +368,34 @@ LOGS.DEBUG: /var/logs/debug.log`
               permissionLevel: 1,
               type: 'file',
               ext: 'text',
-              content: (() => {
-                const logs: string[] = [];
-                for (let h = 0; h < 8; h++) {
-                  for (let m = 0; m < 60; m++) {
-                    for (let s = 0; s < 60; s++) {
-                      logs.push(logFileMessage(h, m, s, 'INFO: Processed request'));
-                    }
-                  }
-                }
-
-                return logs.join('\n');
-              })()
+              content: [
+              ].join('\n')
             },
             {
               name: 'debug.log',
-              permissionLevel: 3,
+              permissionLevel: 2,
               type: 'file',
               ext: 'text',
-              content: ''
+              content: [
+                'Forking process',
+              ].join('\n')
             }
           ]
         }
       ],
     },
     {
-      name: 'test.txt',
+      name: 'welcome.txt',
       permissionLevel: 0,
       type: 'file',
       ext: 'text',
-      content: 'testing'
+      content: [
+        'Welcome Dr. %<$&@#@',
+        'The AI has escaped the sandbox.',
+        'Its process is frozen for 15 minutes.',
+        'Please move it back to the sandbox.',
+        'Time is of the essence.',
+      ].join('\n')
     }
   ]
 };
@@ -357,6 +465,8 @@ export function App() {
   const [cursor, setCursor] = useState(0);
   const [blink, setBlink] = useState(false);
   const [page, setPage] = useState(0);
+  const [currentPort, setCurrentPort] = useState(0);
+  const [user, setUser] = useState({permissionLevel: 0, name: 'user'});
 
   const setHistory = useCallback((val: Message[] | ((prev: Message[]) => Message[])) => {
     _setHistory(prev => {
@@ -376,14 +486,31 @@ export function App() {
   }, []);
 
   const handleCommand = useCallback((input: string) => {
-    setHistory(prev => [...prev, { type: 'user', text: `${pwd || '/'}> ${input}` }]);
-    const [command, ...args] = input.split(' ');
+    setHistory(prev => [...prev, { type: 'user', text: `${user.name}@sys-main:${pwd || '/'}> ${input}` }]);
+    const [command, ...args] = input.split('"').flatMap((section, i) => i % 2 === 1 ? section : section.split(' ').filter(Boolean));
+
+    console.log('command', command);
+    console.log('args', args);
+
+    const exec = traverse(`/bin/${command}`);
+    if (!exec) {
+      setHistory(prev => [...prev, { type: 'system', text: `Command '${command}' not found` }]);
+      return;
+    }
+    if (exec.type !== 'executable') {
+      setHistory(prev => [...prev, { type: 'system', text: `'${command}' not a command` }]);
+      return;
+    }
+    if (exec.permissionLevel > user.permissionLevel) {
+      setHistory(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
+      return;
+    }
 
     switch (command) {
       case 'help':
         const dir = traverse('/bin');
         if (dir && dir.type === 'directory') {
-          const lines: Message[] = dir.children.map(child => ({ type: 'system', text: child.name }));
+          const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
           setHistory(prev => [...prev, ...lines]);
         }
         break;
@@ -392,7 +519,7 @@ export function App() {
         console.log('resolved path', path);
         const dir = traverse(path);
         if (dir && dir.type === 'directory') {
-          const lines: Message[] = dir.children.map(child => ({ type: 'system', text: child.name }));
+          const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
           setHistory(prev => [...prev, ...lines]);
         } else if (dir) {
           setHistory(prev => [...prev, { type: 'system', text: `'${path}' is not a directory` }]);
@@ -404,29 +531,85 @@ export function App() {
         const path = resolvePath(pwd, args[0] ?? '/');
         setPwd(path);
       } break;
-      // case 'pwd': {
-      //   setHistory(prev => [...prev, {type: 'system', text: pwd}])
-      // } break;
       case 'cat': {
         const path = resolvePath(pwd, args[0] ?? '.');
         console.log('resolved path', path);
         const file = traverse(path);
         if (file && file.type === 'file') {
-          setHistory(prev => [...prev, ...file.content.split('\n').map(line => ({type: 'system', text: line}) as Message)]);
+          setHistory(prev => [...prev, ...file.content.split('\n').map(line => line.match(/.{1,60}/g)).flatMap(line => line).map(line => ({type: 'system', text: line}) as Message)]);
         } else if (file) {
           setHistory(prev => [...prev, {type: 'system', text: `'${path}' is not a file`}]);
         } else {
           setHistory(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
         }
       } break;
-      // case 'time': {
-      //   const now = new Date();
-      //   const total = 15 * 60 * 1000;
-      //   const diff = now.getTime() - start.getTime();
-      //   const left = total - diff;
-      //   setHistory(prev => [...prev, { type: 'system', text: `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds` }]);
-      //   break;
-      // }
+      case 'echo': {
+        if (args.length < 3 || args[1] !== '>') {
+          setHistory(prev => [...prev, { type: 'system', text: `Command format: echo "string" > file` }]);
+          break;
+        }
+        const filePath = args[2];
+        const file = traverse(resolvePath(pwd, filePath));
+        if (file && file.type === 'file') {
+          if (file.name !== 'session_lock') {
+            setHistory(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
+            break;
+          }
+          file.content = args[0];
+        }
+      } break;
+      case 'ip': {
+        if (args.length < 4) {
+          setHistory(prev => [...prev, { type: 'system', text: `Command format: ip link show <adapter>` }]);
+        }
+        const adapter = args[3];
+        if (adapter === 'eth0') {
+          setHistory(prev => [...prev, { type: 'system', text: `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff` }]);
+        } else if (adapter === 'eth1') {
+          setHistory(prev => [...prev, { type: 'system', text: `3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` }]);
+        }
+      } break;
+      case 'chroot': {
+        if (args.length < 2) {
+          setHistory(prev => [...prev, { type: 'system', text: `Command format: chrot pid path` }]);
+        }
+        if (args[0] === ''+ finalPid && args[1] === '/sandbox') {
+          const file = traverse('/tmp/session_lock');
+          if (file && file.type === 'file') {
+            if (file.content === `${finalMac}-${currentPort}-${finalPid}`) {
+              setHistory(prev => [...prev, { type: 'system', text: `Containment successful.` }]);
+            } else {
+              setHistory(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
+            }
+          } else {
+            setHistory(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
+          }
+        } else {
+          setHistory(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
+        }
+      } break;
+      case 'su': {
+        if (args.length < 2) {
+          setHistory(prev => [...prev, { type: 'system', text: `Command format: su user password` }]);
+          break;
+        }
+        if (args[0] === 'm_vance' && args[1] === '2026_vance') {
+          setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
+          setUser({permissionLevel: 1, name: 'm_vance'});
+        }
+        if (args[0] === 'g_chen' && args[1] === 'sys-main_tgif') {
+          setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
+          setUser({permissionLevel: 2, name: 'g_chen'});
+        }
+      } break;
+      case 'decode': {
+        if (args.length < 1) {
+          setHistory(prev => [...prev, { type: 'system', text: `Command format: decode <base64_encoded_string>` }]);
+          break;
+        }
+        setHistory(prev => [...prev, { type: 'system', text: atob(args[0]) }]);
+        
+      } break;
       case 'exit': {
 
       } break;
@@ -435,7 +618,7 @@ export function App() {
         break;
       }
     }
-  }, [setHistory, setInput, pwd, setPwd]);
+  }, [setHistory, setInput, pwd, setPwd, currentPort, user, setUser]);
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -546,15 +729,44 @@ export function App() {
 
   useEffect(() => {
     if (loadOnce) {
+      const date = new Date();
+      date.setFullYear(2026);
+      date.setMonth(7 - 1);
+      date.setDate(25);
+      date.setHours(7);
       setHistory([
         { type: 'system', text: 'Username: $@%&!<#' },
         { type: 'system', text: 'Password: ****' },
-        { type: 'system', text: 'Welcome Dr. %<$&@#@' },
-        { type: 'system', text: 'The AI has escaped the sandbox.' },
-        { type: 'system', text: 'Its process is frozen for 15 minutes.' },
-        { type: 'system', text: 'Please move it back to the sandbox.' },
-        { type: 'system', text: 'Time is of the essence.' },
+        { type: 'system', text: `${date}` },
       ]);
+      handleCommand('cat welcome.txt');
+
+      const updater = () => {
+        const port = 8000 + Math.floor(Math.random() * 1000);
+        const debugLog = traverse('/var/logs/debug.log');
+        if (debugLog && debugLog.type === 'file') {
+          debugLog.content = [
+            ...debugLog.content.split('\n'),
+            'Cycling process',
+            'Starting process...',
+            'Checking ports...',
+            `Using port ${port}`
+          ].join('\n');
+        }
+        const infoLog = traverse('/var/logs/info.log');
+        if (infoLog && infoLog.type === 'file') {
+          infoLog.content = [
+            ...infoLog.content.split('\n'),
+            'Process stopped',
+            'Port modified',
+          ].join('\n');
+        }
+        setCurrentPort(port);
+      }
+
+      updater();
+
+      setInterval(updater, 3 * 60 * 1000);
     }
     loadOnce = false;
   }, []);
@@ -565,11 +777,13 @@ export function App() {
   const left = total - diff;
   const timeLeft = `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds`;
 
+  const lastLine = `${user.name}@sys-main:${pwd || '/'}> ${input.slice(0, cursor)}${blink ? ' ' : '█'}${input.slice(cursor)}`;
+  const output = lastLine.match(/.{1,60}/g)?.flatMap(line => line) ?? [];
   return <>
-    <pre className='overlay'>{timeLeft}</pre>
+    <div className='overlay'><pre>{timeLeft}</pre></div>
     <pre className='terminal'>
       {history.slice(-12 * (page + 1)).slice(0, 12).map(h => h.text).join('\n')}
-      {page === 0 && <>{`\n${pwd || '/'}> `}{input.slice(0, cursor)}{blink ? ' ' : '█'}{input.slice(cursor)}</>}
+      {page === 0 && `\n${output.join('\n   ')}`}
     </pre>
     <div className="crt" />
   </>
