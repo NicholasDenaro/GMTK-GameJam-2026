@@ -500,6 +500,7 @@ export function App() {
   const [freezeTime, setFreezeTime] = useState<Date | null>(null);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [inputHistoryCursor, setInputHistoryCursor] = useState(0);
+  const [lost, setLost] = useState(false);
 
   const setHistory = useCallback((val: Message[] | ((prev: Message[]) => Message[])) => {
     _setHistory(prev => {
@@ -785,7 +786,7 @@ export function App() {
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
-      if (queue.length > 0) {
+      if (queue.length > 0 || lost) {
         event.stopPropagation();
         event.preventDefault();
         return;
@@ -907,7 +908,7 @@ export function App() {
     return () => {
       document.removeEventListener('keydown', listener);
     }
-  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue]);
+  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue, lost]);
 
 
   useEffect(() => {
@@ -967,11 +968,21 @@ export function App() {
     }
   }, [freezeTime]);
 
+  useEffect(() => {
+    if (lost) {
+      queue.push({ type: 'system', index: 0, timeout: 20, text: 'ERR_CONNECTION_RESET'});
+    }
+  }, [lost]);
+
   const now = new Date();
   const total = 15 * 60 * 1000;
   const diff = (freezeTime ?? now).getTime() - start.getTime();
   const left = total - diff;
   const timeLeft = `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds`;
+
+  if (left < 0 && !lost) {
+    setLost(true);
+  }
 
   const lastLine = `${user.name}@sys-main:${pwd || '/'}> ${input.slice(0, cursor)}${blink ? ' ' : '█'}${input.slice(cursor)}`;
   const output = lastLine.match(/.{1,60}/g)?.flatMap(line => line) ?? [];
@@ -979,7 +990,7 @@ export function App() {
     <div className={`overlay ${freezeTime ? 'win' : ''}`}><pre>{left > 0 ? timeLeft : 'Containment Breached'}</pre></div>
     <pre className='terminal'>
       {history.slice(-12 * (page + 1)).slice(0, 12).map((h, i) => <div className={`${h.type}`}>{h.text}{(queue.length > 0 && i === history.length - 1) ? '█' : ''}</div>)}
-      {page === 0 && queue.length === 0 && <div>{output.join('\n   ')}</div>}
+      {page === 0 && queue.length === 0 && !lost && <div>{output.join('\n   ')}</div>}
     </pre>
     <div className="crt" />
   </>
