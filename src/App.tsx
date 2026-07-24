@@ -70,6 +70,29 @@ type INode = {
   }
 )
 
+type IFile = Extract<INode, { type: 'file' }>;
+type IDirectory = Extract<INode, { type: 'directory' }>;
+// type IExecutable = Extract<INode, { type: 'executable' }>;
+
+function toFiles(permissionLevel: number, ...names: string[]): IFile[] {
+  return names.map(name => ({
+    name: name,
+    permissionLevel: permissionLevel,
+    type: 'file',
+    ext: 'text',
+    content: ''
+  }));
+}
+
+function toDirectories(permissionLevel: number, ...names: string[]): IDirectory[] {
+  return names.map(name => ({
+    name: name,
+    permissionLevel: permissionLevel,
+    type: 'directory',
+    children: []
+  }));
+}
+
 function logFileMessage(hour: number, minute: number, second: number, message: string) {
   return `[${`${hour}`.padStart(2, '0')}:${`${minute}`.padStart(2, '0')}:${`${second}`.padStart(2, '0')}] ${message}`;
 }
@@ -107,6 +130,11 @@ const FileSystemRoot: INode = {
         },
         {
           name: 'cat',
+          permissionLevel: 0,
+          type: 'executable',
+        },
+        {
+          name: 'grep',
           permissionLevel: 0,
           type: 'executable',
         },
@@ -196,7 +224,9 @@ const FileSystemRoot: INode = {
                 zalgify('<CORRUPTED>'),
                 logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
                 logFileMessage(1, 50, 15, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
+                zalgify('<CORRUPTED>'),
                 logFileMessage(2, 12, 48, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
+                zalgify('<CORRUPTED>'),
                 logFileMessage(3, 26, 3, 'AUTH_OK - USER: a_gile - SERVICE: LOCAL_TERM (TTY2)'),
                 logFileMessage(3, 56, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
                 zalgify('<CORRUPTED>')
@@ -274,22 +304,16 @@ const FileSystemRoot: INode = {
           name: 'extensions',
           permissionLevel: 0,
           type:'directory',
-          children: [
+          children: toFiles(0, 
             'tts',
             'img',
-          ].map(file => ({
-            name: file,
-            permissionLevel: 0,
-            type: 'file',
-            ext: 'text',
-            content: '',
-          }))
+          )
         },
         {
           name: 'lib',
           permissionLevel: 0,
           type: 'directory',
-          children: [
+          children: toFiles(0,
             'glibc',
             'libdl',
             'libc',
@@ -301,13 +325,7 @@ const FileSystemRoot: INode = {
             'expat',
             'libpcre',
             'libunistring'
-          ].map(file => ({
-            name: file,
-            permissionLevel: 0,
-            type: 'file',
-            ext: 'text',
-            content: '',
-          }))
+          )
         },
         {
           name: 'container.conf',
@@ -472,10 +490,19 @@ const FileSystemRoot: INode = {
                   permissionLevel: 1,
                   content: [
                     'HOST=sys-main2',
-                    'TEST_USER=b_tables',
+                    `TEST_USER=${btoa('b_tables')}`,
                     `TEST_PASS=${btoa(bTablesPass)}`
                   ].join('\n'),
-                }
+                },
+                ...toDirectories(1, 
+                  'pre-alpha',
+                  'alpha',
+                  'beta',
+                  'beta2',
+                  'beta3',
+                  'rc1',
+                  'release1',
+                )
               ]
             },
             {
@@ -747,9 +774,19 @@ export function App() {
     console.log('command', command);
     console.log('args', args);
 
+    const pipeIndex = args.findIndex(arg => arg === '|');
+    const grepEnabled = args[pipeIndex + 1] === 'grep';
+    const grepString = grepEnabled ? args[pipeIndex + 2] : '';
+
+    if (pipeIndex !== -1) {
+      args.splice(0, args.length, ...args.slice(0, pipeIndex));
+    }
+
     if (!command) {
       return;
     }
+
+    const output: Message[] = [];
 
     const exec = traverse(`/bin/${command}`, user.permissionLevel);
     if (!exec) {
@@ -775,53 +812,57 @@ export function App() {
           } else if (dir.children.filter(child => child.permissionLevel <= user.permissionLevel && child.name === args[0])) {
             switch (args[0]) {
               case 'help':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'help [<command>]' },
                   { type: 'system', text: 'command is optional, when included provides more details about that command' },
-                  { type: 'system', text: 'displays avialable commands' }]);
+                  { type: 'system', text: 'displays avialable commands' });
                 break;
               case 'cd':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'cd [<path>]' },
                   { type: 'system', text: 'path is optional, when excluded, moves to the / directory' },
-                  { type: 'system', text: 'changes current directory, can use relative paths.' }]);
+                  { type: 'system', text: 'changes current directory, can use relative paths.' });
                 break;
               case 'ls':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'ls [<path>]' },
-                  { type: 'system', text: 'path is optional, when excluded, lists files in current directory' },
-                  { type: 'system', text: 'lists files in directory, can use relative paths.' }]);
+                  { type: 'system', text: 'path is optional, when excluded, lists files in current directory, can use relative paths' });
                 break;
               case 'cat':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'cat <file>' },
-                  { type: 'system', text: 'prints the contents of the file.' }]);
+                  { type: 'system', text: 'prints the contents of the file.' });
+                break;
+              case 'grep':
+                output.push(
+                { type: 'system', text: '<command> | grep <search>' },
+                { type: 'system', text: 'prints the lines of the output that match the search.' });
                 break;
               case 'decode':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'decode "text"' },
-                  { type: 'system', text: 'decodes text that has been encoded' }]);
+                  { type: 'system', text: 'decodes text that has been encoded' });
                 break;
               case 'echo':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'echo "text" > <file>' },
-                  { type: 'system', text: 'writes content to a file.' }]);
+                  { type: 'system', text: 'writes content to a file.' });
                 break;
               case 'su':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'su <username> <password>' },
-                  { type: 'system', text: 'logs in as user' }]);
+                  { type: 'system', text: 'logs in as user' });
                 break;
               case 'ip':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'ip link show <adapter>' },
                   { type: 'system', text: 'displays information about network adapters' },
-                  { type: 'system', text: 'adapters include eth0, eth1' }]);
+                  { type: 'system', text: 'adapters include eth0, eth1' });
                 break;
               case 'netstat':
-                op(prev => [...prev,
+                output.push(
                   { type: 'system', text: 'netstat <port>' },
-                  { type: 'system', text: 'displays information about processes connected to the network' }]);
+                  { type: 'system', text: 'displays information about processes connected to the network' });
                 break;
             }
           }
@@ -833,11 +874,11 @@ export function App() {
         const dir = traverse(path, user.permissionLevel);
         if (dir && dir.type === 'directory') {
           const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
-          op(prev => [...prev, ...lines]);
+          output.push(...lines);
         } else if (dir) {
-          op(prev => [...prev, { type: 'system', text: `'${path}' is not a directory` }]);
+          output.push({ type: 'system', text: `'${path}' is not a directory` });
         } else {
-          op(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
+          output.push({ type: 'system', text: `'${path}' not found` });
         }
       } break;
       case 'cd': {
@@ -846,7 +887,7 @@ export function App() {
         if (traverse(path, user.permissionLevel)) {
           setPwd(path === '/' ? '' : path);
         } else {
-          op(prev => [...prev, { type: 'system', text: `'${args[0]}' not found` }]);
+          output.push({ type: 'system', text: `'${args[0]}' not found` });
         }
       } break;
       case 'cat': {
@@ -854,23 +895,26 @@ export function App() {
         console.log('resolved path', path);
         const file = traverse(path, user.permissionLevel);
         if (file && file.type === 'file') {
-          op(prev => [...prev, ...file.content.split('\n').map(line => line.match(/.{1,60}/g)).flatMap(line => line).map(line => ({type: 'system', text: line}) as Message)]);
+          output.push(...file.content.split('\n').map(line => line.match(/.{1,60}/g)).flatMap(line => line).map(line => ({type: 'system', text: line}) as Message));
         } else if (file) {
-          op(prev => [...prev, {type: 'system', text: `'${path}' is not a text file`}]);
+          output.push({type: 'system', text: `'${path}' is not a text file`});
         } else {
-          op(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
+          output.push({ type: 'system', text: `'${path}' not found` });
         }
+      } break;
+      case 'grep': {
+
       } break;
       case 'echo': {
         if (args.length < 3 || args[1] !== '>') {
-          op(prev => [...prev, { type: 'system', text: `Command format: echo "string" > file` }]);
+          output.push({ type: 'system', text: `Command format: echo "string" > file` });
           break;
         }
         const filePath = args[2];
         const file = traverse(resolvePath(pwd, filePath), user.permissionLevel);
         if (file && file.type === 'file') {
           if (file.name !== 'session_lock') {
-            op(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
+            output.push({ type: 'system', text: `Permission Denied` });
             break;
           }
           file.content = args[0];
@@ -878,74 +922,76 @@ export function App() {
       } break;
       case 'ip': {
         if (args.length < 3) {
-          op(prev => [...prev, { type: 'system', text: `Command format: ip link show <adapter>` }]);
+          output.push({ type: 'system', text: `Command format: ip link show <adapter>` });
         }
         const adapter = args[2];
         if (adapter === 'eth0') {
-          op(prev => [...prev, { type: 'system', text: `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff` }]);
+          output.push({ type: 'system', text: `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff` });
         } else if (adapter === 'eth1') {
-          op(prev => [...prev, { type: 'system', text: `3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` }]);
+          output.push({ type: 'system', text: `3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` });
         }
       } break;
       case 'netstat': {
         if (args.length < 1) {
-          op(prev => [...prev, { type: 'system', text: `Command format: netstat <port>` }]);
+          output.push({ type: 'system', text: `Command format: netstat <port>` });
         }
         const port = args[0];
         if (Number(port) === currentPort) {
-          op(prev => [...prev, { type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` }]);
+          output.push({ type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` });
         }
       } break;
       case 'chroot': {
         if (args.length < 2) {
-          op(prev => [...prev, { type: 'system', text: `Command format: chrot <pid> <path>` }]);
+          output.push({ type: 'system', text: `Command format: chrot <pid> <path>` });
         }
         if (args[0] === ''+ finalPid && args[1] === '/sandbox') {
           const file = traverse('/tmp/session_lock', user.permissionLevel);
           if (file && file.type === 'file') {
             if (file.content === `${finalMac}-${currentPort}-${errorCode}`) {
-              op(prev => [...prev, { type: 'system', text: `Containment successful.` }]);
+              output.push({ type: 'system', text: `Containment successful.` });
               setFreezeTime(new Date());
             } else {
-              op(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
+              output.push({ type: 'system', text: `Containment failed.` });
             }
           } else {
-            op(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
+            output.push({ type: 'system', text: `Containment failed.` });
           }
         } else {
-          op(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
+          output.push({ type: 'system', text: `Permission Denied` });
         }
       } break;
       case 'su': {
         if (args.length < 2) {
-          op(prev => [...prev, { type: 'system', text: `Command format: su user password` }]);
+          output.push({ type: 'system', text: `Command format: su user password` });
           break;
         }
         if (args[0] === 'a_gile' && args[1].toLocaleLowerCase() === '2026_aaron') {
-          op(prev => [...prev, { type: 'system', text: `Login Success` }]);
+          output.push({ type: 'system', text: `Login Success` });
           setUser({permissionLevel: 1, name: 'a_gile'});
         }
         if (args[0] === 'b_tables' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
-          op(prev => [...prev, { type: 'system', text: `Login Success` }]);
+          output.push({ type: 'system', text: `Login Success` });
           setUser({permissionLevel: 2, name: 'b_tables'});
         }
       } break;
       case 'decode': {
         if (args.length < 1) {
-          op(prev => [...prev, { type: 'system', text: `Command format: decode <base64_encoded_string>` }]);
+          output.push({ type: 'system', text: `Command format: decode <base64_encoded_string>` });
           break;
         }
-        op(prev => [...prev, { type: 'system', text: atob(args[0]) }]);
+        output.push({ type: 'system', text: atob(args[0]) });
         
       } break;
       case 'exit': {
 
       } break;
       default: {
-        op(prev => [...prev, {type: 'system', text: `Command '${command}' not found`}])
+        output.push({type: 'system', text: `Command '${command}' not found`})
         break;
       }
     }
+
+    op(prev => [...prev, ...output.filter(m => m.text.includes(grepString))]);
   }, [setHistory, setInput, pwd, setPwd, currentPort, user, setUser, setFreezeTime, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor]);
 
   useEffect(() => {
