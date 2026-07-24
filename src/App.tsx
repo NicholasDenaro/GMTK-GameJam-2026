@@ -140,12 +140,12 @@ const FileSystemRoot: INode = {
         },
         {
           name: 'netstat',
-          permissionLevel: 2,
+          permissionLevel: 1,
           type: 'executable',
         },
         {
           name: 'ip',
-          permissionLevel: 2,
+          permissionLevel: 1,
           type: 'executable',
         },
         {
@@ -165,7 +165,7 @@ const FileSystemRoot: INode = {
         },
         {
           name: 'chroot',
-          permissionLevel: 2,
+          permissionLevel: 1,
           type: 'executable',
         }
       ]
@@ -275,7 +275,6 @@ const FileSystemRoot: INode = {
             `SUBNET: 10.240.0.0/16`,
             `GATEWAY: 10.240.0.1`
           ].join('\n')
-,
         }
       ],
     },
@@ -403,10 +402,12 @@ const FileSystemRoot: INode = {
                   content: [
                     'Username: b_tables',
                     'Password: ***',
-                    'b_tables@sys-main:/> netstat 8013',
-                    'tcp  0  0  127.0.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
+                    'b_tables@sys-main:/> cat /var/logs/debug.info',
+                    zalgify('<CORRUPTED>'),
+                    'b_tables@sys-main:/> netstat | grep 8013',
+                    'tcp  0  0  10.240.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
                     'b_tables@sys-main:/> ip link show eth0',
-                    '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff',
+                    'eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:10:3a:b7 brd ff:ff:ff:ff:ff:ff',
                     'b_tables@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
                     'b_tables@sys-main:/> chroot 4537 /sandbox',
                     'b_tables@sys-main:/> echo "Containment Successful" > ~/notes.txt',
@@ -466,7 +467,7 @@ const FileSystemRoot: INode = {
                 'Welcome Mr. Aaron',
                 'a_gile@sys-main:/> cd /sandbox',
                 'a_gile@sys-main:/sanbox> run launch_core.sh --port 8014',
-                'a_gile@sys-main:/sanbox> netstat 8014',
+                'a_gile@sys-main:/sanbox> netstat | grep 8014',
                 'tcp  0  0  127.0.0.1:5668  0.0.0.0:*  LISTEN 8014/sbx_mgrd',
                 `tcp  0  0  10.240.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
                 'a_gile@sys-main:/sanbox> cat /var/logs/info.log',
@@ -861,7 +862,7 @@ export function App() {
                 break;
               case 'netstat':
                 output.push(
-                  { type: 'system', text: 'netstat <port>' },
+                  { type: 'system', text: 'netstat' },
                   { type: 'system', text: 'displays information about processes connected to the network' });
                 break;
             }
@@ -922,27 +923,42 @@ export function App() {
       } break;
       case 'ip': {
         if (args.length < 3) {
-          output.push({ type: 'system', text: `Command format: ip link show <adapter>` });
+          output.push({ type: 'system', text: `Command format: ip link show [<adapter>]` });
         }
+        const adapters: (Message & {adapter: string})[] = [
+          { adapter: 'lo', type: 'system', text: `lo: <LOOPBACK,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:00:00:00:00:00 brd 00:00:00:00:00:00` },
+          { adapter: 'eth0', type: 'system', text: `eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:10:3a:b7 brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth1', type: 'system', text: `eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 95:52:63:11:a1:c6 brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth2', type: 'system', text: `eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether b3:30:2d:63:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth3', type: 'system', text: `eth3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 28:e3:9f:f3:b8:53 brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth4', type: 'system', text: `eth4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether d3:74:60:5d:69:9a brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth5', type: 'system', text: `eth5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 7f:1a:33:27:35:02 brd ff:ff:ff:ff:ff:ff` },
+        ];
         const adapter = args[2];
-        if (adapter === 'eth0') {
-          output.push({ type: 'system', text: `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff` });
-        } else if (adapter === 'eth1') {
-          output.push({ type: 'system', text: `3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` });
-        }
+        output.push(...adapters.filter(a => a.adapter === adapter))
       } break;
       case 'netstat': {
-        if (args.length < 1) {
-          output.push({ type: 'system', text: `Command format: netstat <port>` });
+        function randomPort() {
+          let port = 1000 + Math.floor(Math.random() * 1000);
+          while (port === currentPort) {
+            port = 1000 + Math.floor(Math.random() * 1000);
+          }
+          return port;
         }
-        const port = args[0];
-        if (Number(port) === currentPort) {
-          output.push({ type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` });
+        function randomPid() {
+          let pid = 1000 + Math.floor(Math.random() * 1000);
+          while (pid === finalPid) {
+            pid = 1000 + Math.floor(Math.random() * 1000);
+          }
+          return pid;
         }
+        const ports: Message[] = new Array(99).fill(0).map(_ => ({ type: 'system', text: `${Math.random() < 0.5 ? 'tcp' : 'udp'}  0  0  ${Math.random() < 0.5 ? `10.240.0.1:${randomPort()}` : `127.0.0.1:${randomPort()} `}  0.0.0.0:*  LISTEN ${randomPid()}/${btoa(Math.random() + '').slice(0, 7)}`}));
+        ports.splice(Math.floor(Math.random() * 99), 0, { type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` });
+        output.push(...ports);
       } break;
       case 'chroot': {
         if (args.length < 2) {
-          output.push({ type: 'system', text: `Command format: chrot <pid> <path>` });
+          output.push({ type: 'system', text: `Command format: chroot <pid> <path>` });
         }
         if (args[0] === ''+ finalPid && args[1] === '/sandbox') {
           const file = traverse('/tmp/session_lock', user.permissionLevel);
@@ -1001,10 +1017,10 @@ export function App() {
         event.preventDefault();
         return;
       }
-      if (event.ctrlKey && event.key === 'c') {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
         return;
       }
-      if (event.ctrlKey && event.key === 'v') {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
         new Promise<void>(async (resolve) => {
           const text = await navigator.clipboard.readText();
           setInput(prev => prev + text);
@@ -1187,7 +1203,7 @@ export function App() {
 
   useEffect(() => {
     if (lost) {
-      queue.push({ type: 'system', index: 0, timeout: 20, text: 'ERR_CONNECTION_RESET'});
+      queue.push({ type: 'system', index: 0, timeout: 20, text: 'Network error: Connection timed out'});
     }
   }, [lost]);
 
