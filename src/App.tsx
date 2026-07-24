@@ -422,9 +422,9 @@ const FileSystemRoot: INode = {
         '!! Warning The AI has escaped the sandbox!!',
         'Automated containment processes started.',
         'Partial containment secured.',
-        'Complete the containment procedure.',
         'Containment will only last another 15 minutes.',
-        'For assistence, run "help"'
+        'Complete the containment procedure.',
+        'For assistence, run "help" or "help help"'
       ].join('\n')
     }
   ]
