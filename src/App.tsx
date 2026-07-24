@@ -483,6 +483,9 @@ function resolvePath(currentDirectory: string, relative: string) {
   return dir.join('/');
 }
 
+type QueuedMessages = (Message & { index: number, timeout: number })[];
+const queue: QueuedMessages = [];
+
 export function App() {
   const [start] = useState(new Date());
   const [history, _setHistory] = useState<Message[]>([]);
@@ -513,6 +516,40 @@ export function App() {
     );
   }, [_setHistory]);
 
+
+  useEffect(() => {
+    const current = queue[0];
+    if (!current) {
+      return;
+    }
+
+    const id = setTimeout(() => {
+      const char = current.text[0];
+      current.text = current.text.slice(1);
+      const insert = current.index === 0;
+      setHistory(prev => {
+        const next = JSON.parse(JSON.stringify(prev));
+        if (insert) {
+          next.push({...current, text: ''});
+        }
+        const line = next.at(-1);
+        if (line) {
+          line.text += char;
+        }
+        return next;
+      });
+
+      current.index++;
+      if (current.text.length === 0) {
+        queue.shift();
+      }
+    }, current.timeout);
+
+    return () => {
+      clearTimeout(id);
+    }
+  }, [queue[0]?.text, setHistory]);
+
   useEffect(() => {
     const id = setInterval(() => {
       setBlink(prev => !prev);
@@ -522,7 +559,11 @@ export function App() {
     }
   }, []);
 
-  const handleCommand = useCallback((input: string) => {
+  const handleCommand = useCallback((input: string, useQueue: boolean = false, timeout: number = 20, wasEnterKey: boolean = false) => {
+    const op = useQueue ? (val: Message[] | ((prev: Message[]) => Message[])) => {
+      const next = typeof val === 'function' ? val(queue) : val;
+      queue.splice(0, queue.length, ...next.map(m => ({ ...m, index: 0, timeout: timeout })));
+    } : setHistory;
     if (input) {
       if (inputHistoryCursor === inputHistory.length) {
         setInputHistory(prev => [...prev, input]);
@@ -535,7 +576,7 @@ export function App() {
       }
     }
     
-    setHistory(prev => [...prev, { type: 'user', text: `${user.name}@sys-main:${pwd || '/'}> ${input}` }]);
+    (wasEnterKey ? setHistory : op)(prev => [...prev, { type: 'user', text: `${user.name}@sys-main:${pwd || '/'}> ${input}` }]);
     const [command, ...args] = input.split('"').flatMap((section, i) => i % 2 === 1 ? section : section.split(' ').filter(Boolean));
 
     console.log('command', command);
@@ -547,15 +588,15 @@ export function App() {
 
     const exec = traverse(`/bin/${command}`, user.permissionLevel);
     if (!exec) {
-      setHistory(prev => [...prev, { type: 'system', text: `Command '${command}' not found` }]);
+      op(prev => [...prev, { type: 'system', text: `Command '${command}' not found` }]);
       return;
     }
     if (exec.type !== 'executable') {
-      setHistory(prev => [...prev, { type: 'system', text: `'${command}' not a command` }]);
+      op(prev => [...prev, { type: 'system', text: `'${command}' not a command` }]);
       return;
     }
     if (exec.permissionLevel > user.permissionLevel) {
-      setHistory(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
+      op(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
       return;
     }
 
@@ -565,55 +606,55 @@ export function App() {
         if (dir && dir.type === 'directory') {
           if (args.length === 0) {
             const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
-            setHistory(prev => [...prev, ...lines]);
+            op(prev => [...prev, ...lines]);
           } else if (dir.children.filter(child => child.permissionLevel <= user.permissionLevel && child.name === args[0])) {
             switch (args[0]) {
               case 'help':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'help [<command>]' },
                   { type: 'system', text: 'command is optional, when included provides more details about that command' },
                   { type: 'system', text: 'displays avialable commands' }]);
                 break;
               case 'cd':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'cd [<path>]' },
                   { type: 'system', text: 'path is optional, when excluded, moves to the / directory' },
                   { type: 'system', text: 'changes current directory, can use relative paths.' }]);
                 break;
               case 'ls':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'ls [<path>]' },
                   { type: 'system', text: 'path is optional, when excluded, lists files in current directory' },
                   { type: 'system', text: 'lists files in directory, can use relative paths.' }]);
                 break;
               case 'cat':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'cat <file>' },
                   { type: 'system', text: 'prints the contents of the file.' }]);
                 break;
               case 'decode':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'decode "text"' },
                   { type: 'system', text: 'decodes text that has been encoded' }]);
                 break;
               case 'echo':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'echo "text" > <file>' },
                   { type: 'system', text: 'writes content to a file.' }]);
                 break;
               case 'su':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'su <username> <password>' },
                   { type: 'system', text: 'logs in as user' }]);
                 break;
               case 'ip':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'ip link show <adapter>' },
                   { type: 'system', text: 'displays information about network adapters' },
                   { type: 'system', text: 'adapters include eth0, eth1' }]);
                 break;
               case 'netstat':
-                setHistory(prev => [...prev,
+                op(prev => [...prev,
                   { type: 'system', text: 'netstat <port>' },
                   { type: 'system', text: 'displays information about processes connected to the network' }]);
                 break;
@@ -627,11 +668,11 @@ export function App() {
         const dir = traverse(path, user.permissionLevel);
         if (dir && dir.type === 'directory') {
           const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
-          setHistory(prev => [...prev, ...lines]);
+          op(prev => [...prev, ...lines]);
         } else if (dir) {
-          setHistory(prev => [...prev, { type: 'system', text: `'${path}' is not a directory` }]);
+          op(prev => [...prev, { type: 'system', text: `'${path}' is not a directory` }]);
         } else {
-          setHistory(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
+          op(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
         }
       } break;
       case 'cd': {
@@ -640,7 +681,7 @@ export function App() {
         if (traverse(path, user.permissionLevel)) {
           setPwd(path === '/' ? '' : path);
         } else {
-          setHistory(prev => [...prev, { type: 'system', text: `'${args[0]}' not found` }]);
+          op(prev => [...prev, { type: 'system', text: `'${args[0]}' not found` }]);
         }
       } break;
       case 'cat': {
@@ -648,23 +689,23 @@ export function App() {
         console.log('resolved path', path);
         const file = traverse(path, user.permissionLevel);
         if (file && file.type === 'file') {
-          setHistory(prev => [...prev, ...file.content.split('\n').map(line => line.match(/.{1,60}/g)).flatMap(line => line).map(line => ({type: 'system', text: line}) as Message)]);
+          op(prev => [...prev, ...file.content.split('\n').map(line => line.match(/.{1,60}/g)).flatMap(line => line).map(line => ({type: 'system', text: line}) as Message)]);
         } else if (file) {
-          setHistory(prev => [...prev, {type: 'system', text: `'${path}' is not a text file`}]);
+          op(prev => [...prev, {type: 'system', text: `'${path}' is not a text file`}]);
         } else {
-          setHistory(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
+          op(prev => [...prev, { type: 'system', text: `'${path}' not found` }]);
         }
       } break;
       case 'echo': {
         if (args.length < 3 || args[1] !== '>') {
-          setHistory(prev => [...prev, { type: 'system', text: `Command format: echo "string" > file` }]);
+          op(prev => [...prev, { type: 'system', text: `Command format: echo "string" > file` }]);
           break;
         }
         const filePath = args[2];
         const file = traverse(resolvePath(pwd, filePath), user.permissionLevel);
         if (file && file.type === 'file') {
           if (file.name !== 'session_lock') {
-            setHistory(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
+            op(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
             break;
           }
           file.content = args[0];
@@ -672,71 +713,71 @@ export function App() {
       } break;
       case 'ip': {
         if (args.length < 3) {
-          setHistory(prev => [...prev, { type: 'system', text: `Command format: ip link show <adapter>` }]);
+          op(prev => [...prev, { type: 'system', text: `Command format: ip link show <adapter>` }]);
         }
         const adapter = args[2];
         if (adapter === 'eth0') {
-          setHistory(prev => [...prev, { type: 'system', text: `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff` }]);
+          op(prev => [...prev, { type: 'system', text: `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:3a:b7 brd ff:ff:ff:ff:ff:ff` }]);
         } else if (adapter === 'eth1') {
-          setHistory(prev => [...prev, { type: 'system', text: `3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` }]);
+          op(prev => [...prev, { type: 'system', text: `3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:11:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` }]);
         }
       } break;
       case 'netstat': {
         if (args.length < 1) {
-          setHistory(prev => [...prev, { type: 'system', text: `Command format: netstat <port>` }]);
+          op(prev => [...prev, { type: 'system', text: `Command format: netstat <port>` }]);
         }
         const port = args[0];
         if (Number(port) === currentPort) {
-          setHistory(prev => [...prev, { type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` }]);
+          op(prev => [...prev, { type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` }]);
         }
       } break;
       case 'chroot': {
         if (args.length < 2) {
-          setHistory(prev => [...prev, { type: 'system', text: `Command format: chrot <pid> <path>` }]);
+          op(prev => [...prev, { type: 'system', text: `Command format: chrot <pid> <path>` }]);
         }
         if (args[0] === ''+ finalPid && args[1] === '/sandbox') {
           const file = traverse('/tmp/session_lock', user.permissionLevel);
           if (file && file.type === 'file') {
             if (file.content === `${finalMac}-${currentPort}-${errorCode}`) {
-              setHistory(prev => [...prev, { type: 'system', text: `Containment successful.` }]);
+              op(prev => [...prev, { type: 'system', text: `Containment successful.` }]);
               setFreezeTime(new Date());
             } else {
-              setHistory(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
+              op(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
             }
           } else {
-            setHistory(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
+            op(prev => [...prev, { type: 'system', text: `Containment failed.` }]);
           }
         } else {
-          setHistory(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
+          op(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
         }
       } break;
       case 'su': {
         if (args.length < 2) {
-          setHistory(prev => [...prev, { type: 'system', text: `Command format: su user password` }]);
+          op(prev => [...prev, { type: 'system', text: `Command format: su user password` }]);
           break;
         }
         if (args[0] === 'a_gile' && args[1].toLocaleLowerCase() === '2026_aaron') {
-          setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
+          op(prev => [...prev, { type: 'system', text: `Login Success` }]);
           setUser({permissionLevel: 1, name: 'a_gile'});
         }
         if (args[0] === 'b_tables' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
-          setHistory(prev => [...prev, { type: 'system', text: `Login Success` }]);
+          op(prev => [...prev, { type: 'system', text: `Login Success` }]);
           setUser({permissionLevel: 2, name: 'b_tables'});
         }
       } break;
       case 'decode': {
         if (args.length < 1) {
-          setHistory(prev => [...prev, { type: 'system', text: `Command format: decode <base64_encoded_string>` }]);
+          op(prev => [...prev, { type: 'system', text: `Command format: decode <base64_encoded_string>` }]);
           break;
         }
-        setHistory(prev => [...prev, { type: 'system', text: atob(args[0]) }]);
+        op(prev => [...prev, { type: 'system', text: atob(args[0]) }]);
         
       } break;
       case 'exit': {
 
       } break;
       default: {
-        setHistory(prev => [...prev, {type: 'system', text: `Command '${command}' not found`}])
+        op(prev => [...prev, {type: 'system', text: `Command '${command}' not found`}])
         break;
       }
     }
@@ -744,6 +785,11 @@ export function App() {
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
+      if (queue.length > 0) {
+        event.stopPropagation();
+        event.preventDefault();
+        return;
+      }
       if (event.ctrlKey && event.key === 'c') {
         return;
       }
@@ -762,7 +808,7 @@ export function App() {
           setCursor(prev => Math.max(0, prev - 1));
           break;
         case 'Enter':
-          handleCommand(input);
+          handleCommand(input, true, 20, true);
           setInput('');
           setCursor(0);
           break;
@@ -861,7 +907,7 @@ export function App() {
     return () => {
       document.removeEventListener('keydown', listener);
     }
-  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor]);
+  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue]);
 
 
   useEffect(() => {
@@ -871,12 +917,12 @@ export function App() {
       date.setMonth(7 - 1);
       date.setDate(25);
       date.setHours(7);
-      setHistory([
-        { type: 'system', text: 'Username: $@%&!<#' },
-        { type: 'system', text: 'Password: ****' },
-        { type: 'system', text: `${date}` },
-      ]);
-      handleCommand('cat welcome.txt');
+      queue.push(
+        { type: 'system', text: 'Username: $@%&!<#', index: 0, timeout: 20 },
+        { type: 'system', text: 'Password: ****', index: 0, timeout: 20 },
+        { type: 'system', text: `${date}`, index: 0, timeout: 20 },
+      );
+      handleCommand('cat welcome.txt', true);
     }
 
     const updater = () => {
@@ -932,8 +978,8 @@ export function App() {
   return <>
     <div className={`overlay ${freezeTime ? 'win' : ''}`}><pre>{left > 0 ? timeLeft : 'Containment Breached'}</pre></div>
     <pre className='terminal'>
-      {history.slice(-12 * (page + 1)).slice(0, 12).map(h => <div className={`${h.type}`}>{h.text}</div>)}
-      {page === 0 && <div>{output.join('\n   ')}</div>}
+      {history.slice(-12 * (page + 1)).slice(0, 12).map((h, i) => <div className={`${h.type}`}>{h.text}{(queue.length > 0 && i === history.length - 1) ? '█' : ''}</div>)}
+      {page === 0 && queue.length === 0 && <div>{output.join('\n   ')}</div>}
     </pre>
     <div className="crt" />
   </>
