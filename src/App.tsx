@@ -1,6 +1,51 @@
 import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 
+
+const ZalgoCodes = [
+  0x300,
+  0x301,
+  0x302,
+  0x303,
+  0x304,
+  0x305,
+  0x306,
+  0x307,
+  0x308,
+  0x309,
+  0x30a,
+  0x30b,
+  0x30c,
+  0x30d,
+  0x30e,
+  0x30f,
+
+  0x316,
+  0x317,
+  0x318,
+  0x319,
+  0x31c,
+  0x31d,
+  0x31e,
+  0x31f,
+  0x320,
+  0x323,
+  0x324,
+  0x325,
+  0x326,
+  0x329,
+  0x32c,
+  0x32d,
+].map(v => String.fromCodePoint(v));
+
+function zalgo(ch: string, zalgo: number) {
+  return ch + (ZalgoCodes.filter(_ => Math.random() < 0.5).sort((__, ___) => Math.random() - 0.5).join('')).slice(0, ([0, 0, 1, 5, 50].at((Math.random() * zalgo) * 5)));
+}
+
+function zalgify(text: string) {
+  return [...text].map(ch => zalgo(ch, 0.9)).join('');
+}
+
 let loadOnce = true;
 
 type Message = {
@@ -103,16 +148,84 @@ const FileSystemRoot: INode = {
       type: 'directory',
       children: [
         {
+          name: 'archived',
+          permissionLevel: 0,
+          type: 'directory',
+          children: [
+            {
+              name: 'auth-2026-07-18.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content: zalgify('<CORRUPTED>')
+            },
+            {
+              name: 'auth-2026-07-19.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content: zalgify('<CORRUPTED>')
+            },
+            {
+              name: 'auth-2026-07-20.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content: zalgify('<CORRUPTED>')
+            },
+            {
+              name: 'auth-2026-07-21.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content: zalgify('<CORRUPTED>')
+            },
+            {
+              name: 'auth-2026-07-22.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content: zalgify('<CORRUPTED>')
+            },
+            {
+              name: 'auth-2026-07-22.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content: [
+                zalgify('<CORRUPTED>'),
+                logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
+                logFileMessage(1, 50, 15, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
+                logFileMessage(2, 12, 48, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
+                logFileMessage(3, 26, 3, 'AUTH_OK - USER: a_gile - SERVICE: LOCAL_TERM (TTY2)'),
+                logFileMessage(3, 56, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
+                zalgify('<CORRUPTED>')
+              ].join('\n')
+            },
+            {
+              name: 'auth-2026-07-23.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content: ''
+            },
+            {
+              name: 'auth-2026-07-24.log',
+              permissionLevel: 0,
+              type: 'file',
+              ext: 'text',
+              content: ''
+            },
+          ]
+        },
+        {
           name: 'auth.log',
           permissionLevel: 0,
           type: 'file',
           ext: 'text',
           content: [
-            logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
-            logFileMessage(1, 50, 15, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
-            logFileMessage(2, 12, 48, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
-            logFileMessage(3, 26, 3, 'AUTH_OK - USER: a_gile - SERVICE: LOCAL_TERM (TTY2)'),
-            logFileMessage(3, 56, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
+            logFileMessage(7, 2, 42, 'AUTH_OK - USER: $@%&!<# - SERVICE: LOCAL_TERM (TTY2)'),
+            logFileMessage(7, 2, 42, 'AUTH_OK - USER: $@%&!<# - SERVICE: LOCAL_TERM (TTY2)'),
           ].join('\n')
         },
         {
@@ -142,6 +255,61 @@ const FileSystemRoot: INode = {
       type: 'directory',
       children: [
         {
+          name: 'bin',
+          permissionLevel: 0,
+          type: 'directory',
+          children: [
+            'ai_core',
+            'LICENSE',
+            'COPYRIGHT'
+          ].map(file => ({
+            name: file,
+            permissionLevel: 0,
+            type: 'file',
+            ext: 'text',
+            content: '',
+          }))
+        },
+        {
+          name: 'extensions',
+          permissionLevel: 0,
+          type:'directory',
+          children: [
+            'tts',
+            'img',
+          ].map(file => ({
+            name: file,
+            permissionLevel: 0,
+            type: 'file',
+            ext: 'text',
+            content: '',
+          }))
+        },
+        {
+          name: 'lib',
+          permissionLevel: 0,
+          type: 'directory',
+          children: [
+            'glibc',
+            'libdl',
+            'libc',
+            'libuv',
+            'openal',
+            'sqlite',
+            'libaio',
+            'ncurses',
+            'expat',
+            'libpcre',
+            'libunistring'
+          ].map(file => ({
+            name: file,
+            permissionLevel: 0,
+            type: 'file',
+            ext: 'text',
+            content: '',
+          }))
+        },
+        {
           name: 'container.conf',
           permissionLevel: 0,
           type: 'file',
@@ -170,7 +338,7 @@ const FileSystemRoot: INode = {
           permissionLevel: 2,
           type: 'file',
           ext: 'text',
-          content: '3AB7-8014-0x6C'
+          content: zalgify('3AB7-8014-0x6C')
         },
         {
           name: 'terminal_session.log',
@@ -180,8 +348,9 @@ const FileSystemRoot: INode = {
           content: [
             'Username: a_gile',
             'Password: ***',
-            'Greetings Mr. Aaron',
-            'exit'
+            'Welcome Mr. Aaron',
+            zalgify('<CORRUPTED>'),
+            'Network error: Connection timed out'
           ].join('\n')
         }
       ],
@@ -202,32 +371,11 @@ const FileSystemRoot: INode = {
               permissionLevel: 1,
               children: [
                 {
-                  name: 'terminal_session-2026-07-12.log',
-                  type: 'file',
-                  ext: 'text',
-                  permissionLevel: 2,
-                  content: ''
-                },
-                {
-                  name: 'terminal_session-2026-07-13.log',
-                  type: 'file',
-                  ext: 'text',
-                  permissionLevel: 2,
-                  content: ''
-                },
-                {
-                  name: 'terminal_session-2026-07-14.log',
-                  type: 'file',
-                  ext: 'text',
-                  permissionLevel: 2,
-                  content: ''
-                },
-                {
                   name: 'terminal_session-2026-07-15.log',
                   type: 'file',
                   ext: 'text',
                   permissionLevel: 2,
-                  content: ''
+                  content: zalgify('<CORRUPTED>')
                 },
                 {
                   name: 'terminal_session-2026-07-17.log',
@@ -248,11 +396,18 @@ const FileSystemRoot: INode = {
                   ].join('\n')
                 },
                 {
+                  name: 'terminal_session-2026-07-18.log',
+                  type: 'file',
+                  ext: 'text',
+                  permissionLevel: 2,
+                  content: zalgify('<CORRUPTED>')
+                },
+                {
                   name: 'terminal_session-2026-07-20.log',
                   type: 'file',
                   ext: 'text',
                   permissionLevel: 2,
-                  content: ''
+                  content: zalgify('<CORRUPTED>')
                 },
               ]
             },
@@ -269,7 +424,7 @@ const FileSystemRoot: INode = {
               permissionLevel: 2,
               content: [
                 '# Op Notes',
-                '2026-07-13: File system anomoly detected. Developers alerted',
+                `2026-07-13: File system ${zalgify('anomoly')} detected. Developers alerted`,
                 '2026-07-17: Containment Successful',
                 '2026-07-20: Alignment protocol in check',
                 '2026-07-21: Testing complete. Release approved.',
@@ -290,19 +445,19 @@ const FileSystemRoot: INode = {
               content: [
                 'Username: a_gile',
                 'Password: ***',
-                'Greetings Mr. Aaron',
+                'Welcome Mr. Aaron',
                 'a_gile@sys-main:/> cd /sandbox',
                 'a_gile@sys-main:/sanbox> run launch_core.sh --port 8014',
                 'a_gile@sys-main:/sanbox> netstat 8014',
                 'tcp  0  0  127.0.0.1:5668  0.0.0.0:*  LISTEN 8014/sbx_mgrd',
-                `tcp  0  0  127.0.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
-                'a_gile@sys-main:/sanbox> cat /var/logs/system.log',
-                '<redacted>',
+                `tcp  0  0  10.240.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
+                'a_gile@sys-main:/sanbox> cat /var/logs/info.log',
+                zalgify('<CORRUPTED>'),
                 'a_gile@sys-main:/sanbox> echo $?',
                 '3',
                 `a_gile@sys-main:/sanbox> kill -9 ${finalPid}`,
                 `bash: kill: (${finalPid}) - Operation not permitted`,
-                'Connection terminated'
+                'Network error: Connection timed out'
               ].join('\n')
             },
             {
@@ -369,26 +524,28 @@ const FileSystemRoot: INode = {
               type: 'file',
               ext: 'text',
               content: [
-                '...',
-                logFileMessage(0,24,10, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(0,24,15, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(0,24,20, 'FATAL: SEGMENTATION FAULT 0x01'),
-                logFileMessage(1,24,20, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(1,24,30, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(1,24,35, 'FATAL: SEGMENTATION FAULT 0x01'),
-                logFileMessage(2,25,10, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(2,25,20, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(2,25,25, 'FATAL: SEGMENTATION FAULT 0x01'),
-                logFileMessage(3,25,5, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(3,28,15, 'ERROR: CONNECTION RESET 0x6C'),
-                logFileMessage(3,30,20, 'FATAL: SEGMENTATION FAULT 0x02'),
-                logFileMessage(4,31,5, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(4,31,35, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(4,31,50, 'FATAL: SEGMENTATION FAULT 0x01'),
-                logFileMessage(5,33,10, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(5,34,15, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(5,35,20, 'FATAL: SEGMENTATION FAULT 0x01'),
-                '...'
+                zalgify('<CORRUPTED>'),
+                logFileMessage(0, 24, 10, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(0, 24, 15, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(0, 24, 20, 'FATAL: SEGMENTATION FAULT 0x01'),
+                zalgify('<CORRUPTED>'),
+                logFileMessage(0, 50, 12, 'ERROR: CONNECTION RESET 0x4A'),
+                zalgify('<CORRUPTED>'),
+                logFileMessage(1, 43, 52, 'ERROR: CONNECTION RESET 0x4A'),
+                zalgify('<CORRUPTED>'),
+                logFileMessage(2, 25, 8, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(2, 25, 16, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(2, 25, 25, 'FATAL: SEGMENTATION FAULT 0x01'),
+                logFileMessage(3, 25, 3, 'ERROR: CONNECTION RESET 0x4A'),
+                zalgify('<REDACTED>'),
+                logFileMessage(3, 28, 18, 'ERROR: CONNECTION RESET 0x6C'),
+                logFileMessage(3, 30, 21, 'FATAL: SEGMENTATION FAULT 0x02'),
+                zalgify('<CORRUPTED>'),
+                logFileMessage(4, 27, 10, 'ERROR: CONNECTION RESET 0xD2'),
+                zalgify('<CORRUPTED>'),
+                logFileMessage(5, 33, 7, 'ERROR: CONNECTION RESET 0xF6'),
+                logFileMessage(5, 34, 14, 'ERROR: CONNECTION RESET 0x14'),
+                zalgify('<CORRUPTED>'),
               ].join('\n')
             },
             {
@@ -397,6 +554,7 @@ const FileSystemRoot: INode = {
               type: 'file',
               ext: 'text',
               content: [
+                'Process spawned'
               ].join('\n')
             },
             {
@@ -481,46 +639,6 @@ function resolvePath(currentDirectory: string, relative: string) {
   }
 
   return dir.join('/');
-}
-
-const ZalgoCodes = [
-  0x300,
-  0x301,
-  0x302,
-  0x303,
-  0x304,
-  0x305,
-  0x306,
-  0x307,
-  0x308,
-  0x309,
-  0x30a,
-  0x30b,
-  0x30c,
-  0x30d,
-  0x30e,
-  0x30f,
-
-  0x316,
-  0x317,
-  0x318,
-  0x319,
-  0x31c,
-  0x31d,
-  0x31e,
-  0x31f,
-  0x320,
-  0x323,
-  0x324,
-  0x325,
-  0x326,
-  0x329,
-  0x32c,
-  0x32d,
-].map(v => String.fromCodePoint(v));
-
-function zalgo(ch: string, zalgo: number) {
-  return ch + (ZalgoCodes.filter(_ => Math.random() < 0.5).sort((__, ___) => Math.random() - 0.5).join('')).slice(0, ([0, 0, 1, 5, 50].at((Math.random() * zalgo) * 5)));
 }
 
 type QueuedMessages = (Message & { index: number, timeout: number })[];
@@ -972,6 +1090,11 @@ export function App() {
         { type: 'system', text: `${date}`, index: 0, timeout: 20 },
       );
       handleCommand('cat welcome.txt', true);
+      // queue.push({ type: 'system', text: '___________', index: 0, timeout: 20 });
+      // queue.push({ type: 'user',   text: '/> CHROOT', index: 0, timeout: 20 });
+      // queue.push({ type: 'system', text: '‾‾‾‾‾‾‾‾‾‾‾', index: 0, timeout: 20 });
+      // queue.push({ type: 'system', text: '\n', index: 0, timeout: 20 });
+      // queue.push({ type: 'system', text: '\n', index: 0, timeout: 20 });
     }
 
     const updater = () => {
@@ -1033,7 +1156,7 @@ export function App() {
   }, [cycle]);
 
   const now = new Date();
-  const total = 15 * 60 * 1000;
+  const total = 15 * 60 * 1000 + 10 * 1000;
   const diff = (freezeTime ?? now).getTime() - start.getTime();
   const left = total - diff;
   const timeLeft = `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds`;
