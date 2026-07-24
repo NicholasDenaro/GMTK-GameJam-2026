@@ -607,10 +607,21 @@ const FileSystemRoot: INode = {
         'Welcome Dr. %<$&@#@',
         '!! Warning The AI has escaped the sandbox!!',
         'Automated containment processes started.',
-        'Partial containment secured.',
-        'Containment will only last another 15 minutes.',
+        'Process frozen. Partial containment secured.',
+        'Freeze will only last another 15 minutes.',
         'Complete the containment procedure.',
-        'For assistence, run "help" or "help help"'
+        'For assistence, run "help" to show the commands or "help help" to see what help does'
+      ].join('\n')
+    },
+    {
+      name: 'containment_procedure.txt',
+      permissionLevel: 0,
+      type: 'file',
+      ext: 'text',
+      content: [
+        `1. Update the /tmp/${zalgify('CORRUPTED')} file with the key`,
+        `2. Key format: "<last 4 hex of ${zalgify('CORRUPTED') }>-<port>-<error ${zalgify('CORRUPTED')}>"`,
+        '3. Run chroot <process id> /sandbox',
       ].join('\n')
     }
   ]
