@@ -483,6 +483,12 @@ function resolvePath(currentDirectory: string, relative: string) {
   return dir.join('/');
 }
 
+const ZalgoCodes = '̡̼͚̭͎͓͎̘̗̥̼͆̓̓̿̅̀͑̄̈́̈́̉̈́̓ͅͅ'.split('');
+
+function zalgo(ch: string, zalgo: number) {
+  return ch + (ZalgoCodes.filter(_ => Math.random() < 0.5).sort((__, ___) => Math.random() - 0.5).join('')).slice(0, ([0, 0, 1, 5, 50].at((Math.random() * zalgo) * 5)));
+}
+
 type QueuedMessages = (Message & { index: number, timeout: number })[];
 const queue: QueuedMessages = [];
 
@@ -501,6 +507,8 @@ export function App() {
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [inputHistoryCursor, setInputHistoryCursor] = useState(0);
   const [lost, setLost] = useState(false);
+  const [cycle, setCycle] = useState(false);
+  const [cancelZalgo, setCancelZalgo] = useState(false);
 
   const setHistory = useCallback((val: Message[] | ((prev: Message[]) => Message[])) => {
     _setHistory(prev => {
@@ -519,7 +527,11 @@ export function App() {
 
 
   useEffect(() => {
-    const current = queue[0];
+    let current = queue[0];
+    while (current && !current.text) {
+      queue.shift();
+      current = queue[0];
+    }
     if (!current) {
       return;
     }
@@ -813,11 +825,13 @@ export function App() {
           setInput('');
           setCursor(0);
           break;
+        case 'F1':
+          setCancelZalgo(prev => !prev);
+          break;
         case 'Shift':
         case 'Control':
         case 'Meta':
         case 'Escape':
-        case 'F1':
         case 'F2':
         case 'F3':
         case 'F4':
@@ -943,7 +957,7 @@ export function App() {
           `Using port ${port}`
         ].join('\n');
 
-        console.log('debugLog', debugLog.content);
+        // console.log('debugLog', debugLog.content);
       }
       const infoLog = traverse('/var/logs/info.log', 10);
       if (infoLog && infoLog.type === 'file') {
@@ -953,7 +967,7 @@ export function App() {
           'Port modified',
         ].join('\n');
 
-        console.log('infoLog', infoLog.content);
+        // console.log('infoLog', infoLog.content);
       }
       setCurrentPort(port);
     }
@@ -974,6 +988,16 @@ export function App() {
     }
   }, [lost]);
 
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setCycle(prev => !prev);
+    }, 20);
+
+    return () => {
+      clearTimeout(id);
+    }
+  }, [cycle]);
+
   const now = new Date();
   const total = 15 * 60 * 1000;
   const diff = (freezeTime ?? now).getTime() - start.getTime();
@@ -984,13 +1008,15 @@ export function App() {
     setLost(true);
   }
 
+  const zal = cancelZalgo ? 0 : 1 - left / total
+
   const lastLine = `${user.name}@sys-main:${pwd || '/'}> ${input.slice(0, cursor)}${blink ? ' ' : '█'}${input.slice(cursor)}`;
   const output = lastLine.match(/.{1,60}/g)?.flatMap(line => line) ?? [];
   return <>
     <div className={`overlay ${freezeTime ? 'win' : ''}`}><pre>{left > 0 ? timeLeft : 'Containment Breached'}</pre></div>
     <pre className='terminal'>
-      {history.slice(-12 * (page + 1)).slice(0, 12).map((h, i) => <div className={`${h.type}`}>{h.text}{(queue.length > 0 && i === history.length - 1) ? '█' : ''}</div>)}
-      {page === 0 && queue.length === 0 && !lost && <div>{output.join('\n   ')}</div>}
+      {history.slice(-12 * (page + 1)).slice(0, 12).map((h, i) => <div className={`${h.type}`}>{[...h.text].map(ch => zalgo(ch, zal)).join('')}{(queue.length > 0 && i === history.length - 1) ? '█' : ''}</div>)}
+      {page === 0 && queue.length === 0 && !lost && <div>{[...output.join('\n   ')].map(ch => zalgo(ch, zal)).join('')}</div>}
     </pre>
     <div className="crt" />
   </>
