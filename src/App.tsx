@@ -483,7 +483,41 @@ function resolvePath(currentDirectory: string, relative: string) {
   return dir.join('/');
 }
 
-const ZalgoCodes = '̡̼͚̭͎͓͎̘̗̥̼͆̓̓̿̅̀͑̄̈́̈́̉̈́̓ͅͅ'.split('');
+const ZalgoCodes = [
+  0x300,
+  0x301,
+  0x302,
+  0x303,
+  0x304,
+  0x305,
+  0x306,
+  0x307,
+  0x308,
+  0x309,
+  0x30a,
+  0x30b,
+  0x30c,
+  0x30d,
+  0x30e,
+  0x30f,
+
+  0x316,
+  0x317,
+  0x318,
+  0x319,
+  0x31c,
+  0x31d,
+  0x31e,
+  0x31f,
+  0x320,
+  0x323,
+  0x324,
+  0x325,
+  0x326,
+  0x329,
+  0x32c,
+  0x32d,
+].map(v => String.fromCodePoint(v));
 
 function zalgo(ch: string, zalgo: number) {
   return ch + (ZalgoCodes.filter(_ => Math.random() < 0.5).sort((__, ___) => Math.random() - 0.5).join('')).slice(0, ([0, 0, 1, 5, 50].at((Math.random() * zalgo) * 5)));
