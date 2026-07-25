@@ -42,6 +42,21 @@ pre {
   text-shadow: 0 0 10px #00aa00 !important;
 }
 
+.file {
+  color: #9dc6d8 !important;
+  text-shadow: 0 0 10px #7caec3 !important;
+}
+
+.executable {
+  color: #d3d312 !important;
+  text-shadow: 0 0 10px #c6c603 !important;
+}
+
+.directory {
+  color: #4583ed !important;
+  text-shadow: 0 0 10px #337cf9 !important;
+}
+
 .system {
   color: #9dc6d8 !important;
   text-shadow: 0 0 10px #7caec3 !important;

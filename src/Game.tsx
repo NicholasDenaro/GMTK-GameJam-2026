@@ -58,7 +58,7 @@ function zalgify(text: string, strength: number = 0.9) {
 let loadOnce = true;
 
 type Message = {
-  type: 'system' | 'user';
+  type: 'system' | 'user' | 'directory' | 'file' | 'executable';
   text: string;
 }
 
@@ -720,6 +720,7 @@ const FileSystemRoot: INode = {
       content: [
         'Developed by: Nicholas (Ninkolas) Denaro',
         'Code: https://github.com/NicholasDenaro/GMTK-GameJam-2026',
+        'Tested by: My Brother',
         'Developed using React',
         'Built with Vite',
         'Beep SFX created with BeepBox'
@@ -1021,7 +1022,7 @@ export function Game() {
         console.log('resolved path', path);
         const dir = traverse(path, user.permissionLevel, 'list');
         if (dir && dir.type === 'directory') {
-          const lines: Message[] = [...dir.children].filter(child => child.viewLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
+          const lines: Message[] = [...dir.children].filter(child => child.viewLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: child.type, text: child.name }));
           output.push(...lines);
         } else if (dir) {
           output.push({ type: 'system', text: `'${path}' is not a directory` });
@@ -1300,7 +1301,22 @@ export function Game() {
           if (found.length > 1 && !tabCompleteResults) {
             const info = '  ' + found.map(f => f.name).join('  ');
             setTabCompleteResults(info);
-            setHistory(prev => [...prev, { type: 'system', text: info }]);
+            const directories = found.filter(f => f.type === 'directory');
+            if (directories.length > 0) {
+              const directory = '  ' + directories.map(f => f.name).join('  ');
+              setHistory(prev => [...prev, { type: 'directory', text: directory }]);
+            }
+            const executables = found.filter(f => f.type === 'executable');
+            if (executables.length > 0) {
+              const exec = '  ' + executables.map(f => f.name).join('  ');
+              setHistory(prev => [...prev, { type: 'executable', text: exec }]);
+            }
+            const files = found.filter(f => f.type === 'file');
+            if (files.length > 0) {
+              const file = '  ' + files.map(f => f.name).join('  ');
+              setHistory(prev => [...prev, { type: 'file', text: file }]);
+            }
+            // setHistory(prev => [...prev, { type: (input.startsWith('cd ') || input.startsWith('ls ')) ? 'directory' : input.startsWith('cat ') ? 'file' : 'system', text: info }]);
           }
           if (found.length === 0 && !mute) {
             AudioSamples['Error'].play();
@@ -1391,12 +1407,13 @@ export function Game() {
         return '(F1)'.at(i - 2);
       }
 
-      if (i >= 8 && i < 13) {
-        return (cancelZalgo ? '\u0336' : '') + 'zalgo'.at(i - 8);
+      const label = 'text distortion';
+      if (i >= 8 && i < 8 + label.length) {
+        return (cancelZalgo ? '\u0336' : '') + label.at(i - 8);
       }
 
-      if (i >= 14 && i < 18) {
-        return '(F2)'.at(i - 14);
+      if (i >= 8 + label.length + 1 && i < 8 + label.length + 5) {
+        return '(F2)'.at(i - (8 + label.length + 1));
       }
 
       if (i > 20 && ch !== ' ') {
