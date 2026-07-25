@@ -891,11 +891,14 @@ export function Game() {
     }
   }, []);
 
-  const handleCommand = useCallback((input: string, useQueue: boolean = false, timeout: number = 20, wasEnterKey: boolean = false) => {
-    const op = useQueue ? (val: Message[] | ((prev: Message[]) => Message[])) => {
+  const handleCommand = useCallback((input: string, useQueue: boolean = false, timeout: number = 20, wasEnterKey: boolean = false, extras?: 'delay' ) => {
+    const op = extras === 'delay' ? () => {} : useQueue ? (val: Message[] | ((prev: Message[]) => Message[])) => {
       const next: (Message & {timeout?: number})[] = typeof val === 'function' ? val(queue) : val;
       queue.splice(0, queue.length, ...next.map(m => ({ ...m, index: 0, timeout: m.timeout ?? timeout })));
     } : setHistory;
+
+    const output: (Message & { timeout?: number })[] = [];
+
     if (input) {
       if (inputHistoryCursor === inputHistory.length) {
         setInputHistory(prev => [...prev, input]);
@@ -915,8 +918,14 @@ export function Game() {
         }
       }
     }
+
+    const prompt = `${user.name}@sys-main:${pwd || '/'}>`;
     
-    (wasEnterKey ? setHistory : op)(prev => [...prev, { type: 'user', text: `${user.name}@sys-main:${pwd || '/'}> ${input}` }]);
+    if (extras === 'delay') {
+      output.push({ type: 'user', text: `${prompt} ${input}` });
+    } else {
+      (wasEnterKey ? setHistory : op)(prev => [...prev, { type: 'user', text: `${prompt} ${input}` }]);
+    }
     const [command, ...args] = input.split('"').flatMap((section, i) => i % 2 === 1 ? section : section.split(' ').filter(Boolean));
 
     console.log('command', command);
@@ -933,8 +942,6 @@ export function Game() {
     if (!command) {
       return;
     }
-
-    const output: Message[] = [];
 
     const exec = traverse(`/bin/${command}`, user.permissionLevel);
     if (!exec) {
@@ -1137,6 +1144,10 @@ export function Game() {
             if (file.content === `${finalMac}-${currentPort}-${errorCode}`) {
               output.push({ type: 'system', text: `Containment successful.` });
               setFreezeTime(new Date());
+              output.push({ type: 'user', text: prompt, timeout: 0});
+              output.push({ type: 'user', text: prompt, timeout: 0});
+              output.push({ type: 'user', text: prompt, timeout: 0});
+              output.push(...(handleCommand('cat /credits.txt', true, 100, false, 'delay') ?? []));
             } else {
               output.push({ type: 'system', text: `Incorrect lock. Containment failed.` });
             }
@@ -1185,6 +1196,8 @@ export function Game() {
     }
 
     op(prev => [...prev, ...output.filter(m => grepString ? m.text?.includes(grepString) : m.text)]);
+
+    return output.filter(m => grepString ? m.text?.includes(grepString) : m.text);
   }, [setHistory, setInput, pwd, setPwd, currentPort, user, setUser, setFreezeTime, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor]);
 
   useEffect(() => {
@@ -1219,12 +1232,24 @@ export function Game() {
           if (input.length > 0) {
             flip();
           } else {
-            // if (!mute) {
-            //   AudioSamples['Error'].play();
-            // }
+            if (!mute) {
+              AudioSamples['Error'].play();
+            }
           }
           setInput(prev => prev.slice(0, cursor - 1) + prev.slice(cursor));
           setCursor(prev => Math.max(0, prev - 1));
+          setTabCompleteResults(undefined);
+          setTabCycle(undefined);
+          break;
+        case 'Delete':
+          if (cursor < input.length) {
+            flip();
+          } else {
+            if (!mute) {
+              AudioSamples['Error'].play();
+            }
+          }
+          setInput(prev => prev.slice(0, cursor) + prev.slice(cursor + 1));
           setTabCompleteResults(undefined);
           setTabCycle(undefined);
           break;
@@ -1243,6 +1268,8 @@ export function Game() {
           setCancelZalgo(prev => !prev);
           break;
         case 'Shift':
+        case 'CapsLock':
+        case 'Alt':
         case 'Control':
         case 'Meta':
         case 'Escape':
@@ -1258,10 +1285,20 @@ export function Game() {
         case 'F12':
           break;
         case 'ArrowLeft':
+          if (cursor === 0) {
+            if (!mute) {
+              AudioSamples['Error'].play();
+            }
+          }
           setCursor(prev => Math.max(0, prev - 1));
           setTabCycle(undefined);
           break;
         case 'ArrowRight':
+          if (cursor === input.length) {
+            if (!mute) {
+              AudioSamples['Error'].play();
+            }
+          }
           setCursor(prev => Math.min(prev + 1, input.length));
           setTabCycle(undefined);
           break;
@@ -1274,6 +1311,11 @@ export function Game() {
           setTabCycle(undefined);
           break;
         case 'ArrowDown':
+          if (inputHistoryCursor === inputHistory.length) {
+            if (!mute) {
+              AudioSamples['Error'].play();
+            }
+          }
           setTabCycle(undefined);
           setInputHistoryCursor(prev => {
             const next = prev % 1 === 0.5 ? prev + 0.5 : Math.min(prev + 1, inputHistory.length);
@@ -1283,6 +1325,11 @@ export function Game() {
           });
           break;
         case 'ArrowUp':
+          if (inputHistoryCursor === 0) {
+            if (!mute) {
+              AudioSamples['Error'].play();
+            }
+          }
           setTabCycle(undefined);
           setInputHistoryCursor(prev => {
             const next = prev % 1 === 0.5 ? prev - 0.5 : Math.max(0, prev - 1);
@@ -1387,6 +1434,10 @@ export function Game() {
         { type: 'system', text: `${date}`, index: 0, timeout: 20 },
       );
       handleCommand('cat welcome.txt', true);
+
+      // handleCommand(`echo "${finalMac}-${currentPort}-${errorCode}" > /tmp/session_lock`, true);
+      // handleCommand(`su a_gile 2026_aaron`, true);
+      // handleCommand(`chroot ${finalPid} /sandbox`, true);
     }
 
     loadOnce = false;
