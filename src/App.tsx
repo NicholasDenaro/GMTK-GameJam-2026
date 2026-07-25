@@ -507,6 +507,11 @@ const FileSystemRoot: INode = {
                 'Password: ***',
                 `${new Date(2026, 7 - 1, 22, 3, 30, 41)}`,
                 'Welcome Mr. Aaron',
+                'a_gile@sys-main:/> cd /home/a_gile/projects',
+                'a_gile@sys-main:/> cat .env',
+                '[REDACTED]',
+                'a_gile@sys-main:/> decode [REDACTED]',
+                zalgify('<CORRUPTED>'),
                 'a_gile@sys-main:/> cd /sandbox',
                 'a_gile@sys-main:/sanbox> run launch_core.sh --port 8014',
                 'a_gile@sys-main:/sanbox> netstat | grep 8014',
@@ -769,7 +774,7 @@ export function App() {
   const [cursor, setCursor] = useState(0);
   const [blink, setBlink] = useState(false);
   const [page, setPage] = useState(0);
-  const [currentPort, setCurrentPort] = useState(8000 + Math.floor(Math.random() * 1000));
+  const [currentPort, _setCurrentPort] = useState(8000 + Math.floor(Math.random() * 1000));
   const [user, setUser] = useState({permissionLevel: 0, name: 'user'});
   const [freezeTime, setFreezeTime] = useState<Date | null>(null);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
