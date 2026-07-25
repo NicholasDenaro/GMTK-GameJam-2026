@@ -1469,17 +1469,19 @@ export function Game() {
   const left = total - diff;
   const timeLeft = `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds`;
 
-  if (left < 0 && !lost) {
-    setLost(true);
+  if (!freezeTime) {
+    if (left < 0 && !lost) {
+      setLost(true);
+    }
   }
 
-  const zal = cancelZalgo ? 0 : 1 - left / total;
+  const zal = (cancelZalgo || freezeTime) ? 0 : 1 - left / total;
 
   const lastLine = `${user.name}@sys-main:${pwd || '/'}> ${input.slice(0, cursor)}${blink ? ' ' : '█'}${input.slice(cursor)}`;
   const mid = lastLine.match(/.{1,63}/g)?.flatMap(line => line) ?? [];
   const output = [mid[0], ...mid.slice(1).join('').match(/.{1,61}/g)?.flatMap(line => line) ?? []];
 
-  const timerText = (left > 0 ? timeLeft : 'Containment Breached')
+  const timerText = (freezeTime ? 'AI Contained' : left > 0 ? timeLeft : 'Containment Breached')
     .padStart(64, ' ')
     .split('')
     .map((ch, i) => {
@@ -1510,7 +1512,7 @@ export function Game() {
 
   return <>
     <pre className='terminal'>
-      <div><span className='system'>{timerText.slice(0, timerText.lastIndexOf('   '))}</span><span className='red'>{timerText.slice(timerText.lastIndexOf('   '))}</span></div>
+      <div><span className='system'>{timerText.slice(0, timerText.lastIndexOf('   '))}</span><span className={freezeTime ? 'user' : 'red'}>{timerText.slice(timerText.lastIndexOf('   '))}</span></div>
       {history.slice(-12 * (page + 1)).slice(0, 12).map((h, i) => <div className={`${h.type}`}>{[...h.text].map(ch => ch !== ' ' ? zalgo(ch, zal) : ch).join('')}{(queue.length > 0 && i === history.length - 1) ? '█' : ''}</div>)}
       {page === 0 && queue.length === 0 && !lost && <div>{[...output.join('\n  ')].map(ch => ch !== ' ' ? zalgo(ch, zal) : ch).join('')}</div>}
     </pre>
