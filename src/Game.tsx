@@ -999,9 +999,8 @@ export function Game() {
                 break;
               case 'ip':
                 output.push(
-                  { type: 'system', text: 'ip link show <adapter>' },
-                  { type: 'system', text: 'displays information about network adapters' },
-                  { type: 'system', text: 'adapters include eth0, eth1' });
+                  { type: 'system', text: 'ip link show [<adapter>]' },
+                  { type: 'system', text: 'adapter is optional. displays information about network adapters.' })
                 break;
               case 'netstat':
                 output.push(
@@ -1081,7 +1080,7 @@ export function Game() {
         }
       } break;
       case 'ip': {
-        if (args.length < 3) {
+        if (args.length < 2) {
           output.push({ type: 'system', text: `Command format: ip link show [<adapter>]` });
         }
         const adapters: (Message & {adapter: string})[] = [
@@ -1094,7 +1093,7 @@ export function Game() {
           { adapter: 'eth5', type: 'system', text: `eth5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.217.0.1 link/ether 7f:1a:33:27:35:02 brd ff:ff:ff:ff:ff:ff` },
         ];
         const adapter = args[2];
-        output.push(...adapters.filter(a => a.adapter === adapter))
+        output.push(...adapters.filter(a => a.adapter === adapter));
       } break;
       case 'netstat': {
         function randomPort() {
