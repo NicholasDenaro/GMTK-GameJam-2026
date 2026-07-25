@@ -58,7 +58,7 @@ function zalgify(text: string, strength: number = 0.9) {
 let loadOnce = true;
 
 type Message = {
-  type: 'system' | 'user' | 'directory' | 'file' | 'executable';
+  type: 'system' | 'user' | 'directory' | 'file' | 'executable' | 'script';
   text: string;
 }
 
@@ -77,6 +77,9 @@ type INode = {
     children: INode[];
   } | {
     type: 'executable',
+  } | {
+    type: 'script',
+    commands: () => string[]
   }
 )
 
@@ -112,6 +115,7 @@ function logFileMessage(hour: number, minute: number, second: number, message: s
 const finalPid = 8372;
 const finalMac = '34D6';
 const errorCode = '0x6C';
+let finalPort = 0;
 
 const bTablesPass = 'sys-main_tgif';
 
@@ -188,6 +192,12 @@ const FileSystemRoot: INode = {
           type: 'executable'
         },
         {
+          name: 'run',
+          permissionLevel: 0,
+          viewLevel: 0,
+          type: 'executable'
+        },
+        {
           name: 'chroot',
           permissionLevel: 1,
           viewLevel: 1,
@@ -245,14 +255,6 @@ const FileSystemRoot: INode = {
               viewLevel: 0,
               type: 'file',
               ext: 'text',
-              content: zalgify('<CORRUPTED>')
-            },
-            {
-              name: 'auth-2026-07-22.log',
-              permissionLevel: 0,
-              viewLevel: 0,
-              type: 'file',
-              ext: 'text',
               content: [
                 zalgify('<CORRUPTED>'),
                 logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
@@ -272,7 +274,7 @@ const FileSystemRoot: INode = {
               viewLevel: 0,
               type: 'file',
               ext: 'text',
-              content: ''
+              content: zalgify('<CORRUPTED>')
             },
             {
               name: 'auth-2026-07-24.log',
@@ -280,7 +282,7 @@ const FileSystemRoot: INode = {
               viewLevel: 0,
               type: 'file',
               ext: 'text',
-              content: ''
+              content: zalgify('<CORRUPTED>')
             },
           ]
         },
@@ -377,7 +379,10 @@ const FileSystemRoot: INode = {
           name: 'launch_core.sh',
           permissionLevel: 0,
           viewLevel: 0,
-          type: 'executable'
+          type: 'script',
+          commands: () => [
+            zalgify('<CORRUPTED>')
+          ],
         }
       ]
     },
@@ -393,7 +398,7 @@ const FileSystemRoot: INode = {
           viewLevel: 1,
           type: 'file',
           ext: 'text',
-          content: zalgify('3AB7-8014-0x6C')
+          content: zalgify('3AB7-8014-0x4A')
         },
         {
           name: 'terminal_session.log',
@@ -585,34 +590,20 @@ const FileSystemRoot: INode = {
           ]
         },
         {
-          name: 'c_sharpe',
+          name: 'd_zine',
           type: 'directory',
           permissionLevel: 0,
           viewLevel: 0,
           children: [
             {
-              name: zalgify('<CORRUPTED>'),
-              type: 'file',
-              permissionLevel: 0,
-              viewLevel: 0,
-              ext: 'text',
-              content: zalgify('<CORRUPTED>'),
-            }
-          ]
-        },
-        {
-          name: 'd_sine',
-          type: 'directory',
-          permissionLevel: 0,
-          viewLevel: 0,
-          children: [
-            {
-              name: zalgify('<CORRUPTED>'),
-              type: 'file',
-              permissionLevel: 0,
-              viewLevel: 0,
-              ext: 'text',
-              content: zalgify('<CORRUPTED>'),
+              name: 'contain_ai.sh',
+              type: 'script',
+              permissionLevel: 4,
+              viewLevel: 4,
+              commands: () => [
+                `echo "${finalMac}-${finalPort}-${errorCode}" > /tmp/session_lock`,
+                `chroot ${finalPid} /sandbox`,
+              ],
             }
           ]
         }
@@ -651,7 +642,7 @@ const FileSystemRoot: INode = {
                 logFileMessage(2, 25, 25, 'FATAL: SEGMENTATION FAULT 0x01'),
                 logFileMessage(3, 25, 3, 'ERROR: CONNECTION RESET 0x4A'),
                 zalgify('<REDACTED>'),
-                logFileMessage(3, 28, 18, 'ERROR: SESSION RESET 0x6C'),
+                logFileMessage(3, 28, 18, `ERROR: SESSION RESET ${errorCode}`),
                 zalgify('<CORRUPTED>'),
                 logFileMessage(4, 27, 10, 'ERROR: CONNECTION RESET 0xD2'),
                 zalgify('<CORRUPTED>'),
@@ -812,6 +803,14 @@ export function Game() {
   const [mute, setMute] = useState(false);
   const [tabCycle, setTabCycle] = useState<{index: number, items: string[]} | undefined>();
 
+  finalPort = currentPort;
+
+  const now = new Date();
+  const total = 15 * 60 * 1000 + 11 * 1000;
+  const diff = (freezeTime ?? now).getTime() - start.getTime();
+  const left = total - diff;
+  const timeLeft = `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds`;
+
   const setHistory = useCallback((val: Message[] | ((prev: Message[]) => Message[])) => {
     _setHistory(prev => {
       const next = [...typeof val === 'function' ? val(prev) : val];
@@ -920,11 +919,12 @@ export function Game() {
     }
 
     const prompt = `${user.name}@sys-main:${pwd || '/'}>`;
-    
+    const inputLine = `${prompt} ${input}`
+
     if (extras === 'delay') {
-      output.push({ type: 'user', text: `${prompt} ${input}` });
+      output.push({ type: 'user', text: inputLine });
     } else {
-      (wasEnterKey ? setHistory : op)(prev => [...prev, { type: 'user', text: `${prompt} ${input}` }]);
+      (wasEnterKey ? setHistory : op)(prev => [...prev, { type: 'user', text: inputLine }]);
     }
     const [command, ...args] = input.split('"').flatMap((section, i) => i % 2 === 1 ? section : section.split(' ').filter(Boolean));
 
@@ -934,6 +934,12 @@ export function Game() {
     const pipeIndex = args.findIndex(arg => arg === '|');
     const grepEnabled = args[pipeIndex + 1] === 'grep';
     const grepString = grepEnabled ? args[pipeIndex + 2] : '';
+
+    const redirectIndex = args.findIndex(arg => arg === '>');
+    console.log('redirectIndex', redirectIndex);
+    const redirectPath = redirectIndex !== -1 ? args[redirectIndex + 1] : null;
+    console.log('redirectPath', redirectPath);
+    const redirectFile = redirectPath ? traverse(resolvePath(pwd, redirectPath), user.permissionLevel) : null;
 
     if (pipeIndex !== -1) {
       args.splice(0, args.length, ...args.slice(0, pipeIndex));
@@ -945,17 +951,22 @@ export function Game() {
 
     const exec = traverse(`/bin/${command}`, user.permissionLevel);
     if (!exec) {
-      op(prev => [...prev, { type: 'system', text: `Command '${command}' not found` }]);
-      return;
+      output.splice(0, output.at.length, { type: 'system', text: `Command '${command}' not found` });
+      op(prev => [...prev, ...output]);
+      return output;
     }
     if (exec.type !== 'executable') {
-      op(prev => [...prev, { type: 'system', text: `'${command}' not a command` }]);
-      return;
+      output.splice(0, output.at.length, { type: 'system', text: `'${command}' not a command` });
+      op(prev => [...prev, ...output]);
+      return output;
     }
     if (exec.permissionLevel > user.permissionLevel) {
-      op(prev => [...prev, { type: 'system', text: `Permission Denied` }]);
-      return;
+      output.splice(0, output.at.length, { type: 'system', text: `Permission Denied` });
+      op(prev => [...prev, ...output]);
+      return output;
     }
+
+    let error = false;
 
     switch (command) {
       case 'help':
@@ -1010,10 +1021,15 @@ export function Game() {
                   { type: 'system', text: 'su <username> <password>' },
                   { type: 'system', text: 'logs in as user' });
                 break;
+              case 'run':
+                output.push(
+                  { type: 'system', text: 'run <script>' },
+                  { type: 'system', text: 'runs a script' });
+                break;
               case 'ip':
                 output.push(
                   { type: 'system', text: 'ip link show [<adapter>]' },
-                  { type: 'system', text: 'adapter is optional. displays information about network adapters.' })
+                  { type: 'system', text: 'adapter is optional. displays information about network adapters and their ip address.' })
                 break;
               case 'netstat':
                 output.push(
@@ -1077,20 +1093,41 @@ export function Game() {
       case 'grep': {
 
       } break;
-      case 'echo': {
-        if (args.length < 3 || args[1] !== '>') {
-          output.push({ type: 'system', text: `Command format: echo "string" > file` });
+      case 'run': {
+        if (args.length < 1) {
+          output.push({ type: 'system', text: `Command format: run <script file>` });
           break;
         }
-        const filePath = args[2];
-        const file = traverse(resolvePath(pwd, filePath), user.permissionLevel);
-        if (file && file.type === 'file') {
-          if (file.name !== 'session_lock') {
-            output.push({ type: 'system', text: `Permission Denied` });
-            break;
+        const path = resolvePath(pwd, args[0] ?? '.');
+        console.log('resolved path', path);
+        const file = traverse(path, user.permissionLevel);
+        if (file && file.type === 'script') {
+          for (let command of file.commands()) {
+            output.push(...(handleCommand(command, true, 20, false, 'delay') ?? []));
           }
-          file.content = args[0];
+        } else {
+          output.push({ type: 'system', text: `'${path}' is not a script file` });
         }
+        
+      } break;
+      case 'echo': {
+        if (args.length === 1) {
+          output.push({ type: 'system', text: args[0] })
+          break;
+        }
+        if (redirectIndex === -1 && args.length < 3) {
+          error = true;
+          
+          output.push({ type: 'system', text: `Command format: echo "string" > <file>` });
+          break;
+        }
+        if (redirectFile && redirectFile.name !== 'session_lock') {
+          error = true;
+          output.push({ type: 'system', text: `Permission Denied` });
+          break;
+        }
+
+        output.push({ type: 'system', text: args[0] });
       } break;
       case 'ip': {
         if (args.length < 2) {
@@ -1142,20 +1179,20 @@ export function Game() {
           const file = traverse('/tmp/session_lock', 10);
           if (file && file.type === 'file') {
             if (file.content === `${finalMac}-${currentPort}-${errorCode}`) {
-              output.push({ type: 'system', text: `Containment successful.` });
+              output.push({ type: 'system', text: `Containment successful with ${timeLeft} left` });
               setFreezeTime(new Date());
               output.push({ type: 'user', text: prompt, timeout: 0});
               output.push({ type: 'user', text: prompt, timeout: 0});
               output.push({ type: 'user', text: prompt, timeout: 0});
               output.push(...(handleCommand('cat /credits.txt', true, 100, false, 'delay') ?? []));
             } else {
-              output.push({ type: 'system', text: `Incorrect lock. Containment failed.` });
+              output.push({ type: 'system', text: `Containment failed: Incorrect lock` });
             }
           } else {
-            output.push({ type: 'system', text: `Containment failed.` });
+            output.push({ type: 'system', text: `Containment failed` });
           }
         } else if (args[0] !== '' + finalPid) {
-          output.push({ type: 'system', text: `Process Id not found.` });
+          output.push({ type: 'system', text: `Process Id not found` });
         } else {
           output.push({ type: 'system', text: `Permission Denied` });
         }
@@ -1168,10 +1205,14 @@ export function Game() {
         if (args[0] === 'a_gile' && args[1].toLocaleLowerCase() === '2026_aaron') {
           output.push({ type: 'system', text: `Login Success` });
           setUser({permissionLevel: 1, name: 'a_gile'});
-        }
-        if (args[0] === 'b_tables' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
+        } else if (args[0] === 'b_tables' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
           output.push({ type: 'system', text: `Login Success` });
           setUser({permissionLevel: 2, name: 'b_tables'});
+        } else if (args[0] === 'd_zine' && args[1].toLocaleLowerCase() === 'evans') {
+          output.push({ type: 'system', text: `Login Success` });
+          setUser({ permissionLevel: 4, name: 'd_zine' });
+        } else {
+          output.push({ type: 'system', text: `Login Failed. Invalid credentials` });
         }
       } break;
       case 'decode': {
@@ -1190,14 +1231,47 @@ export function Game() {
 
       } break;
       default: {
-        output.push({type: 'system', text: `Command '${command}' not found`})
+        output.push({type: 'system', text: `Command '${command}' not found`});
+        console.log('DEFAULTED TO COMMAND NOT FOUND')
         break;
       }
     }
 
-    op(prev => [...prev, ...output.filter(m => grepString ? m.text?.includes(grepString) : m.text)]);
+    if (redirectIndex !== -1 && !redirectFile) {
+      const canSee = traverse(resolvePath(pwd, args[redirectIndex + 1]), user.permissionLevel, 'list');
+      const exists = traverse(resolvePath(pwd, args[redirectIndex + 1]), 10);
+      if (canSee && exists) {
+        error = true;
+        output.splice(0, output.length, { type: 'system', text: `Permission Denied` });
+      } else {
+        error = true;
+        output.splice(0, output.length, { type: 'system', text: `${redirectPath} not found` });
+      }
+    }
 
-    return output.filter(m => grepString ? m.text?.includes(grepString) : m.text);
+    if (redirectPath && redirectFile && redirectFile.name !== 'session_lock') {
+      output.splice(0, output.length, { type: 'system', text: `Permission Denied` });
+      error = true;
+    }
+
+    const filteredOutput = output.filter(m => grepString ? m.text?.includes(grepString) : m.text);
+
+    console.log('filteredOutput', filteredOutput);
+    
+    if (!error) {
+      if (redirectFile && redirectFile.type === 'file' && redirectFile.name === 'session_lock') {
+        const result = output.slice(extras === 'delay' ? 1 : 0).filter(m => grepString ? m.text?.includes(grepString) : m.text).map(o => o.text).join('\n');
+        redirectFile.content = result;
+        output.splice(extras === 'delay' ? 1 : 0, output.length);
+        return output;
+      } else {
+        op(prev => [...prev, ...filteredOutput]);
+      }
+    } else {
+      op(prev => [...prev, ...filteredOutput]);
+    }
+
+    return filteredOutput;
   }, [setHistory, setInput, pwd, setPwd, currentPort, user, setUser, setFreezeTime, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor]);
 
   useEffect(() => {
@@ -1366,7 +1440,11 @@ export function Game() {
             const current = traverse(builtPath, user.permissionLevel, 'list');
             const bin = traverse('/bin', user.permissionLevel);
 
-            const children = [current?.type === 'directory' ? ((input.startsWith('cd ') || input.startsWith('ls ')) ? current.children.filter(c => c.type === 'directory') : current.children) : [], !(input.startsWith('cd ') || input.startsWith('ls ') || input.startsWith('cat')) && bin?.type === 'directory' ? bin.children : []].flatMap(v => v);
+            const children = [
+              current?.type === 'directory' ? ((input.startsWith('cd ') || input.startsWith('ls ')) ? current.children.filter(c => c.type === 'directory') : current.children) : [],
+              !(input.startsWith('cd ') || input.startsWith('run ') || input.startsWith('ls ') || input.startsWith('cat')) && bin?.type === 'directory' ? bin.children : [],
+              // input.startsWith('run ') && current?.type === 'directory' ? current.children.filter(c => c.type === 'script') : []
+            ].flatMap(v => v);
 
             const found = children.filter(child => child.viewLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
             if (found.length === 1) {
@@ -1393,6 +1471,11 @@ export function Game() {
               if (files.length > 0) {
                 const file = '  ' + files.map(f => f.name).join('  ');
                 setHistory(prev => [...prev, { type: 'file', text: file }]);
+              }
+              const scripts = found.filter(f => f.type === 'script');
+              if (scripts.length > 0) {
+                const script = '  ' + scripts.map(f => f.name).join('  ');
+                setHistory(prev => [...prev, { type: 'script', text: script }]);
               }
               // setHistory(prev => [...prev, { type: (input.startsWith('cd ') || input.startsWith('ls ')) ? 'directory' : input.startsWith('cat ') ? 'file' : 'system', text: info }]);
             }
@@ -1462,12 +1545,6 @@ export function Game() {
       clearTimeout(id);
     }
   }, [cycle]);
-
-  const now = new Date();
-  const total = 15 * 60 * 1000 + 11 * 1000;
-  const diff = (freezeTime ?? now).getTime() - start.getTime();
-  const left = total - diff;
-  const timeLeft = `${Math.floor(left / 1000 / 60)} minutes ${Math.floor((left / 1000) % 60)} seconds`;
 
   if (!freezeTime) {
     if (left < 0 && !lost) {

@@ -52,6 +52,11 @@ pre {
   text-shadow: 0 0 10px #c6c603 !important;
 }
 
+.script {
+  color: #fca314 !important;
+  text-shadow: 0 0 10px #e08b03 !important;
+}
+
 .directory {
   color: #4583ed !important;
   text-shadow: 0 0 10px #337cf9 !important;
