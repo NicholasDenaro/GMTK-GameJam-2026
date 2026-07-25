@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import './Title.css';
-import { AudioSamples } from './App';
+import { AudioSamples, randomFlip } from './App';
 
 let loadTitleOnce = true;
 
@@ -74,8 +74,7 @@ export function Title({callback}: {callback: () => void}) {
       });
 
       current.index++;
-      const sample = ['Flip1', 'Flip2', 'Flip3'].at(Math.floor(Math.random() * 3));
-      AudioSamples[sample!].play();
+      AudioSamples[randomFlip()!].play();
       if (current.text.length === 0) {
         queue.shift();
       }

@@ -4,6 +4,8 @@ import { Title } from './Title';
 import flip1 from './assets/flip1.ogg';
 import flip2 from './assets/flip2.ogg';
 import flip3 from './assets/flip3.ogg';
+import flip4 from './assets/flip4.ogg';
+import flip5 from './assets/flip5.ogg';
 import error from './assets/error.ogg';
 import error2 from './assets/error2.ogg';
 
@@ -15,6 +17,8 @@ export const AudioSamples: Record<string, {
   'Flip1': new Audio(flip1),
   'Flip2': new Audio(flip2),
   'Flip3': new Audio(flip3),
+  'Flip4': new Audio(flip4),
+  'Flip5': new Audio(flip5),
   'Error-loud': new Audio(error),
   'Error': new Audio(error2),
 }).map((e) => {
@@ -32,6 +36,10 @@ export const AudioSamples: Record<string, {
   ...prev,
   [cur.key]: cur
 }), {});
+
+export function randomFlip() {
+  return ['Flip1', 'Flip2', 'Flip3', 'Flip4', 'Flip5'].at(Math.floor(Math.random() * 5));
+}
 
 export function App() {
   const [state, setState] = useState<'title' | 'game'>('title');

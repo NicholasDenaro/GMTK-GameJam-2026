@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import './Game.css';
-import { AudioSamples } from './App';
+import { AudioSamples, randomFlip } from './App';
 
 
 const ZalgoCodes = [
@@ -1179,8 +1179,7 @@ export function Game() {
         if (mute) {
           return;
         }
-        const sample = ['Flip1', 'Flip2', 'Flip3'].at(Math.floor(Math.random() * 3));
-        AudioSamples[sample!].play();
+        AudioSamples[randomFlip()!].play();
       }
 
       switch (event.key) {
