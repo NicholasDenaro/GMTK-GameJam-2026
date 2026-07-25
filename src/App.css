@@ -12,9 +12,11 @@ html, body, #root {
   flex: 1;
   color: #39ff14;
   padding: 1em;
+  padding-top: 0.5em;
   font-size: 16px;
-  /* font-size: 48px; */
-  line-height: 1.5;
+  line-height: 1.4;
+  /* font-size: 48px; 
+  line-height: 1.5; */
   letter-spacing: 0.5px;
   text-shadow: 0 0 10px #00aa00;
   font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', 'Liberation Mono', Menlo, Monaco, 'Consolas', monospace;
@@ -43,6 +45,11 @@ pre {
 .system {
   color: #9dc6d8 !important;
   text-shadow: 0 0 10px #7caec3 !important;
+}
+
+.red {
+  color: #ff2714;
+  text-shadow: 0 0 10px #a4271b;
 }
 
 .overlay {

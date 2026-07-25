@@ -56,6 +56,7 @@ type Message = {
 type INode = {
   name: string;
   permissionLevel: number;
+  viewLevel: number;
 } & (
   {
     type: 'file';
@@ -78,6 +79,7 @@ function toFiles(permissionLevel: number, ...names: string[]): IFile[] {
   return names.map(name => ({
     name: name,
     permissionLevel: permissionLevel,
+    viewLevel: permissionLevel,
     type: 'file',
     ext: 'text',
     content: ''
@@ -88,6 +90,7 @@ function toDirectories(permissionLevel: number, ...names: string[]): IDirectory[
   return names.map(name => ({
     name: name,
     permissionLevel: permissionLevel,
+    viewLevel: permissionLevel,
     type: 'directory',
     children: []
   }));
@@ -106,66 +109,79 @@ const bTablesPass = 'sys-main_tgif';
 const FileSystemRoot: INode = {
   name: '',
   permissionLevel: 0,
+  viewLevel: 0,
   type: 'directory',
   children: [
     {
       name: 'bin',
       permissionLevel: 0,
+      viewLevel: 0,
       type: 'directory',
       children: [
         {
           name: 'help',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'executable',
         },
         {
           name: 'ls',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'executable',
         },
         {
           name: 'cd',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'executable',
         },
         {
           name: 'cat',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'executable',
         },
         {
           name: 'grep',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'executable',
         },
         {
           name: 'netstat',
           permissionLevel: 1,
+          viewLevel: 1,
           type: 'executable',
         },
         {
           name: 'ip',
           permissionLevel: 1,
+          viewLevel: 1,
           type: 'executable',
         },
         {
           name: 'echo',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'executable'
         },
         {
           name: 'decode',
           permissionLevel: 1,
+          viewLevel: 1,
           type: 'executable'
         },
         {
           name: 'su',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'executable'
         },
         {
           name: 'chroot',
           permissionLevel: 1,
+          viewLevel: 1,
           type: 'executable',
         }
       ]
@@ -173,16 +189,19 @@ const FileSystemRoot: INode = {
     {
       name: 'etc',
       permissionLevel: 0,
+      viewLevel: 0,
       type: 'directory',
       children: [
         {
           name: 'archived',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'directory',
           children: [
             {
               name: 'auth-2026-07-18.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: zalgify('<CORRUPTED>')
@@ -190,6 +209,7 @@ const FileSystemRoot: INode = {
             {
               name: 'auth-2026-07-19.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: zalgify('<CORRUPTED>')
@@ -197,6 +217,7 @@ const FileSystemRoot: INode = {
             {
               name: 'auth-2026-07-20.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: zalgify('<CORRUPTED>')
@@ -204,6 +225,7 @@ const FileSystemRoot: INode = {
             {
               name: 'auth-2026-07-21.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: zalgify('<CORRUPTED>')
@@ -211,6 +233,7 @@ const FileSystemRoot: INode = {
             {
               name: 'auth-2026-07-22.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: zalgify('<CORRUPTED>')
@@ -218,13 +241,15 @@ const FileSystemRoot: INode = {
             {
               name: 'auth-2026-07-22.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: [
                 zalgify('<CORRUPTED>'),
                 logFileMessage(1, 34, 18, 'AUTH_OK - USER: sys_cron - SERVICE: CRON'),
-                logFileMessage(1, 50, 15, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
+                logFileMessage(1, 50, 15, 'AUTH_OK - USER: c_sharpe - SERVICE: SSH (10.240.1.12)'),
                 zalgify('<CORRUPTED>'),
+                logFileMessage(2, 2, 25, 'AUTH_OK - USER: ftpd - SERVICE: DAEMON'),
                 logFileMessage(2, 12, 48, 'AUTH_OK - USER: b_tables - SERVICE: SSH (10.240.1.12)'),
                 zalgify('<CORRUPTED>'),
                 logFileMessage(3, 26, 3, 'AUTH_OK - USER: a_gile - SERVICE: LOCAL_TERM (TTY2)'),
@@ -235,6 +260,7 @@ const FileSystemRoot: INode = {
             {
               name: 'auth-2026-07-23.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: ''
@@ -242,6 +268,7 @@ const FileSystemRoot: INode = {
             {
               name: 'auth-2026-07-24.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: ''
@@ -251,57 +278,50 @@ const FileSystemRoot: INode = {
         {
           name: 'auth.log',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'file',
           ext: 'text',
           content: [
-            logFileMessage(7, 2, 42, 'AUTH_OK - USER: $@%&!<# - SERVICE: LOCAL_TERM (TTY2)'),
             logFileMessage(7, 2, 42, 'AUTH_OK - USER: $@%&!<# - SERVICE: LOCAL_TERM (TTY2)'),
           ].join('\n')
         },
         {
           name: 'notice.txt',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'file',
           ext: 'text',
-          content: '2026-07-18: System wide password reset. Default password "<year>_<firstname>". Please reset your passwords immediately.'
+          content: '2026-07-19: System wide password reset. Default password "<year>_<firstname>". Please reset your passwords immediately.'
         },
         {
           name: 'network.conf',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'file',
           ext: 'text',
-          content: [
-            `# NETWORK ROUTING SPEC`,
-            `SUBNET: 10.240.0.0/16`,
-            `GATEWAY: 10.240.0.1`
-          ].join('\n')
+          content: zalgify('<CORRUPTED>')
         }
       ],
     },
     {
       name: 'sandbox',
       permissionLevel: 0,
+      viewLevel: 0,
       type: 'directory',
       children: [
         {
           name: 'bin',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'directory',
-          children: [
-            'ai_core',
+          children: toFiles(0, 'ai_core',
             'LICENSE',
-            'COPYRIGHT'
-          ].map(file => ({
-            name: file,
-            permissionLevel: 0,
-            type: 'file',
-            ext: 'text',
-            content: '',
-          }))
+            'COPYRIGHT')
         },
         {
           name: 'extensions',
           permissionLevel: 0,
+          viewLevel: 0,
           type:'directory',
           children: toFiles(0, 
             'tts',
@@ -311,6 +331,7 @@ const FileSystemRoot: INode = {
         {
           name: 'lib',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'directory',
           children: toFiles(0,
             'glibc',
@@ -329,6 +350,7 @@ const FileSystemRoot: INode = {
         {
           name: 'container.conf',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'file',
           ext: 'text',
           content: [
@@ -341,6 +363,7 @@ const FileSystemRoot: INode = {
         {
           name: 'launch_core.sh',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'executable'
         }
       ]
@@ -348,11 +371,13 @@ const FileSystemRoot: INode = {
     {
       name: 'tmp',
       permissionLevel: 0,
+      viewLevel: 0,
       type: 'directory',
       children: [
         {
           name: 'session_lock',
-          permissionLevel: 2,
+          permissionLevel: 1,
+          viewLevel: 1,
           type: 'file',
           ext: 'text',
           content: zalgify('3AB7-8014-0x6C')
@@ -360,6 +385,7 @@ const FileSystemRoot: INode = {
         {
           name: 'terminal_session.log',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'file',
           ext: 'text',
           content: [
@@ -375,23 +401,27 @@ const FileSystemRoot: INode = {
     {
       name: 'home',
       permissionLevel: 0,
+      viewLevel: 0,
       type: 'directory',
       children: [
         {
           name: 'b_tables',
           type: 'directory',
-          permissionLevel: 0,
+          permissionLevel: 2,
+          viewLevel: 0,
           children: [
             {
               name: 'archived',
               type: 'directory',
-              permissionLevel: 1,
+              permissionLevel: 2,
+              viewLevel: 2,
               children: [
                 {
                   name: 'terminal_session-2026-07-15.log',
                   type: 'file',
                   ext: 'text',
                   permissionLevel: 2,
+                  viewLevel: 2,
                   content: zalgify('<CORRUPTED>')
                 },
                 {
@@ -399,18 +429,21 @@ const FileSystemRoot: INode = {
                   type: 'file',
                   ext: 'text',
                   permissionLevel: 2,
+                  viewLevel: 2,
                   content: [
                     'Username: b_tables',
                     'Password: ***',
+                    `${new Date(2026, 7 - 1, 17, 4, 23)}`,
                     'b_tables@sys-main:/> cat /var/logs/debug.info',
                     zalgify('<CORRUPTED>'),
                     'b_tables@sys-main:/> netstat | grep 8013',
                     'tcp  0  0  10.240.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
                     'b_tables@sys-main:/> ip link show eth0',
-                    'eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:10:3a:b7 brd ff:ff:ff:ff:ff:ff',
+                    'eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.240.0.1 link/ether 00:1b:44:10:3a:b7 brd ff:ff:ff:ff:ff:ff',
                     'b_tables@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
                     'b_tables@sys-main:/> chroot 4537 /sandbox',
-                    'b_tables@sys-main:/> echo "Containment Successful" > ~/notes.txt',
+                    'Containment Successful',
+                    'b_tables@sys-main:/> echo "Containment Successful. Time to go home." > ~/notes.txt',
                     'b_tables@sys-main:/> exit'
                   ].join('\n')
                 },
@@ -419,6 +452,7 @@ const FileSystemRoot: INode = {
                   type: 'file',
                   ext: 'text',
                   permissionLevel: 2,
+                  viewLevel: 2,
                   content: zalgify('<CORRUPTED>')
                 },
                 {
@@ -426,6 +460,7 @@ const FileSystemRoot: INode = {
                   type: 'file',
                   ext: 'text',
                   permissionLevel: 2,
+                  viewLevel: 2,
                   content: zalgify('<CORRUPTED>')
                 },
               ]
@@ -434,6 +469,7 @@ const FileSystemRoot: INode = {
               name: 'projects',
               type: 'directory',
               permissionLevel: 2,
+              viewLevel: 2,
               children: []
             },
             {
@@ -441,10 +477,11 @@ const FileSystemRoot: INode = {
               type: 'file',
               ext: 'text',
               permissionLevel: 2,
+              viewLevel: 2,
               content: [
                 '# Op Notes',
                 `2026-07-13: File system ${zalgify('anomoly')} detected. Developers alerted`,
-                '2026-07-17: Containment Successful',
+                '2026-07-17: Containment Successful. Time to go home.',
                 '2026-07-20: Alignment protocol in check',
                 '2026-07-21: Testing complete. Release approved.',
               ].join('\n')
@@ -454,28 +491,28 @@ const FileSystemRoot: INode = {
         {
           name: 'a_gile',
           type: 'directory',
-          permissionLevel: 0,
+          permissionLevel: 1,
+          viewLevel: 0,
           children: [
             {
               name: 'terminal_session.log',
               type: 'file',
               ext: 'text',
               permissionLevel: 1,
+              viewLevel: 1,
               content: [
                 'Username: a_gile',
                 'Password: ***',
+                `${new Date(2026, 7 - 1, 22, 3, 30, 41)}`,
                 'Welcome Mr. Aaron',
                 'a_gile@sys-main:/> cd /sandbox',
                 'a_gile@sys-main:/sanbox> run launch_core.sh --port 8014',
                 'a_gile@sys-main:/sanbox> netstat | grep 8014',
-                'tcp  0  0  127.0.0.1:5668   0.0.0.0:*  LISTEN 8014/sbx_mgrd',
-                `tcp  0  0  10.240.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
-                'a_gile@sys-main:/sanbox> cat /var/logs/info.log',
-                zalgify('<CORRUPTED>'),
-                'a_gile@sys-main:/sanbox> echo $?',
-                '3',
+                `tcp  0  0  10.35.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
+                'a_gile@sys-main:/sanbox> cat /var/logs/debug.log',
+                'Permission Denied',
                 `a_gile@sys-main:/sanbox> kill -9 ${finalPid}`,
-                `bash: kill: (${finalPid}) - Operation not permitted`,
+                `Permission Denied`,
                 'Network error: Connection timed out'
               ].join('\n')
             },
@@ -483,12 +520,14 @@ const FileSystemRoot: INode = {
               name: 'projects',
               type: 'directory',
               permissionLevel: 1,
+              viewLevel: 1,
               children: [
                 {
                   name: '.env',
                   type: 'file',
                   ext: 'text',
                   permissionLevel: 1,
+                  viewLevel: 1,
                   content: [
                     'HOST=sys-main2',
                     `TEST_USER=${btoa('b_tables')}`,
@@ -511,13 +550,14 @@ const FileSystemRoot: INode = {
               type: 'file',
               ext: 'text',
               permissionLevel: 1,
+              viewLevel: 1,
               content: [
                 '# Dev Notes',
                 '2026-07-12: Alpha test successful. AI producing results.',
                 '2026-07-13: Noticed file system anomolies. Pausing Alpha test for investigation.',
                 '2026-07-15: New alignment rules have been added to the AI. Beta test next week.',
                 '2026-07-21: Beta test went off without a hitch. Going live tomorrow early AM.',
-                '2026-07-22: Go live in a few hours. We all need a break.',
+                '2026-07-22: Go live in a few hours. We all need a break. I drew the short straw so I get to start it up.',
               ].join('\n')
             }
           ]
@@ -526,29 +566,52 @@ const FileSystemRoot: INode = {
           name: 'c_sharpe',
           type: 'directory',
           permissionLevel: 0,
-          children: []
+          viewLevel: 0,
+          children: [
+            {
+              name: zalgify('<CORRUPTED>'),
+              type: 'file',
+              permissionLevel: 0,
+              viewLevel: 0,
+              ext: 'text',
+              content: zalgify('<CORRUPTED>'),
+            }
+          ]
         },
         {
           name: 'd_sine',
           type: 'directory',
           permissionLevel: 0,
-          children: []
+          viewLevel: 0,
+          children: [
+            {
+              name: zalgify('<CORRUPTED>'),
+              type: 'file',
+              permissionLevel: 0,
+              viewLevel: 0,
+              ext: 'text',
+              content: zalgify('<CORRUPTED>'),
+            }
+          ]
         }
       ],
     },
     {
       name: 'var',
       permissionLevel: 0,
+      viewLevel: 0,
       type: 'directory',
       children: [
         {
           name: 'logs',
           permissionLevel: 0,
+          viewLevel: 0,
           type: 'directory',
           children: [
             {
               name: 'error.log',
               permissionLevel: 0,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: [
@@ -579,6 +642,7 @@ const FileSystemRoot: INode = {
             {
               name: 'info.log',
               permissionLevel: 1,
+              viewLevel: 0,
               type: 'file',
               ext: 'text',
               content: [
@@ -588,6 +652,7 @@ const FileSystemRoot: INode = {
             {
               name: 'debug.log',
               permissionLevel: 2,
+              viewLevel: 1,
               type: 'file',
               ext: 'text',
               content: [
@@ -601,6 +666,7 @@ const FileSystemRoot: INode = {
     {
       name: 'welcome.txt',
       permissionLevel: 0,
+      viewLevel: 0,
       type: 'file',
       ext: 'text',
       content: [
@@ -616,21 +682,26 @@ const FileSystemRoot: INode = {
     {
       name: 'containment_procedure.txt',
       permissionLevel: 0,
+      viewLevel: 0,
       type: 'file',
       ext: 'text',
       content: [
         `1. Update the /tmp/${zalgify('CORRUPTED')} file with the key`,
         `2. Key format: "<last 4 hex of ${zalgify('CORRUPTED') }>-<port>-<error ${zalgify('CORRUPTED')}>"`,
         '3. Run chroot <process id> /sandbox',
+        '',
+        'Last run by: a_gile'
       ].join('\n')
     }
   ]
 };
 
-function traverse(path: string, permissionLevel: number) {
+function traverse(path: string, permissionLevel: number, type: 'list' | 'read' = 'read') {
   if (path === '' || path==='/') {
     return FileSystemRoot;
   }
+
+  const permissionProp = type === 'list' ? 'viewLevel' : 'permissionLevel';
 
   const dirs = path.slice(1).split('/');
   let node: INode = FileSystemRoot;
@@ -640,7 +711,7 @@ function traverse(path: string, permissionLevel: number) {
     }
 
     const child = node.children.find(n => n.name === dir);
-    if (!child || child.permissionLevel > permissionLevel) {
+    if (!child || child[permissionProp] > permissionLevel) {
       return null;
     }
     node = child;
@@ -706,7 +777,7 @@ export function App() {
       const next = [...typeof val === 'function' ? val(prev) : val];
       for (let i = 0; i < next.length; i++ ) {
         const line = next[i];
-        const split: string[] = line?.text?.match(/.{1,60}/g) ?? [];
+        const split: string[] = line?.text?.match(/.{1,63}/g) ?? [];
         if (split && split.length > 1) {
           next.splice(i, 1, ...split.map(s => ({type: line.type, text: s})));
         }
@@ -885,9 +956,9 @@ export function App() {
       case 'ls':{
         const path = resolvePath(pwd, args[0] || '.');
         console.log('resolved path', path);
-        const dir = traverse(path, user.permissionLevel);
+        const dir = traverse(path, user.permissionLevel, 'list');
         if (dir && dir.type === 'directory') {
-          const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
+          const lines: Message[] = [...dir.children].filter(child => child.viewLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
           output.push(...lines);
         } else if (dir) {
           output.push({ type: 'system', text: `'${path}' is not a directory` });
@@ -898,10 +969,19 @@ export function App() {
       case 'cd': {
         const path = resolvePath(pwd, args[0] || '/');
         console.log('resolved path', path);
-        if (traverse(path, user.permissionLevel)) {
-          setPwd(path === '/' ? '' : path);
+        const node = traverse(path, user.permissionLevel);
+        if (node) {
+          if (node.type === 'directory') {
+            setPwd(path === '/' ? '' : path);
+          } else {
+            output.push({ type: 'system', text: `${path} is not a directory` });
+          }
         } else {
-          output.push({ type: 'system', text: `'${args[0]}' not found` });
+          if (traverse(path, user.permissionLevel, 'list')) {
+            output.push({ type: 'system', text: `Permission Denied` });
+          } else {
+            output.push({ type: 'system', text: `'${args[0]}' not found` });
+          }
         }
       } break;
       case 'cat': {
@@ -940,12 +1020,12 @@ export function App() {
         }
         const adapters: (Message & {adapter: string})[] = [
           { adapter: 'lo', type: 'system', text: `lo: <LOOPBACK,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:00:00:00:00:00 brd 00:00:00:00:00:00` },
-          { adapter: 'eth0', type: 'system', text: `eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 00:1b:44:10:3a:b7 brd ff:ff:ff:ff:ff:ff` },
-          { adapter: 'eth1', type: 'system', text: `eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 95:52:63:11:a1:c6 brd ff:ff:ff:ff:ff:ff` },
-          { adapter: 'eth2', type: 'system', text: `eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether b3:30:2d:63:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` },
-          { adapter: 'eth3', type: 'system', text: `eth3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 28:e3:9f:f3:b8:53 brd ff:ff:ff:ff:ff:ff` },
-          { adapter: 'eth4', type: 'system', text: `eth4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether d3:74:60:5d:69:9a brd ff:ff:ff:ff:ff:ff` },
-          { adapter: 'eth5', type: 'system', text: `eth5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP link/ether 7f:1a:33:27:35:02 brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth0', type: 'system', text: `eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.240.0.1 link/ether 00:1b:44:10:3a:b7 brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth1', type: 'system', text: `eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.58.0.1 link/ether 95:52:63:11:a1:c6 brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth2', type: 'system', text: `eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.35.0.1 link/ether b3:30:2d:63:${finalMac.slice(0, 2).toLocaleLowerCase()}:${finalMac.slice(2).toLocaleLowerCase()} brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth3', type: 'system', text: `eth3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.124.0.1 link/ether 28:e3:9f:f3:b8:53 brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth4', type: 'system', text: `eth4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.192.0.1 link/ether d3:74:60:5d:69:9a brd ff:ff:ff:ff:ff:ff` },
+          { adapter: 'eth5', type: 'system', text: `eth5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.217.0.1 link/ether 7f:1a:33:27:35:02 brd ff:ff:ff:ff:ff:ff` },
         ];
         const adapter = args[2];
         output.push(...adapters.filter(a => a.adapter === adapter))
@@ -1027,7 +1107,7 @@ export function App() {
       }
     }
 
-    op(prev => [...prev, ...output.filter(m => m.text.includes(grepString))]);
+    op(prev => [...prev, ...output.filter(m => m.text?.includes(grepString))]);
   }, [setHistory, setInput, pwd, setPwd, currentPort, user, setUser, setFreezeTime, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor]);
 
   useEffect(() => {
@@ -1121,9 +1201,9 @@ export function App() {
           console.log('pwd', pwd);
           const builtPath = resolvePath(pwd, parts.slice(0, -1).join('/'));
           console.log('builtPath', builtPath);
-          const current = traverse(builtPath, user.permissionLevel);
+          const current = traverse(builtPath, user.permissionLevel, 'list');
           if (current?.type === 'directory') {
-            const found = current.children.filter(child => child.permissionLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
+            const found = current.children.filter(child => child.viewLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
             if (found.length === 1) {
               const text = [...segments.slice(0, -1), [...parts.slice(0, -1), found[0].name].join('/')].join(' ');
               setInput(text);
@@ -1195,8 +1275,6 @@ export function App() {
           'Checking ports...',
           `Using port ${port}`
         ].join('\n');
-
-        // console.log('debugLog', debugLog.content);
       }
       const infoLog = traverse('/var/logs/info.log', 10);
       if (infoLog && infoLog.type === 'file') {
@@ -1205,8 +1283,6 @@ export function App() {
           'Process stopped',
           'Port modified',
         ].join('\n');
-
-        // console.log('infoLog', infoLog.content);
       }
       setCurrentPort(port);
     }
@@ -1247,15 +1323,16 @@ export function App() {
     setLost(true);
   }
 
-  const zal = cancelZalgo ? 0 : 1 - left / total
+  const zal = cancelZalgo ? 0 : 1 - left / total;
 
   const lastLine = `${user.name}@sys-main:${pwd || '/'}> ${input.slice(0, cursor)}${blink ? ' ' : '█'}${input.slice(cursor)}`;
-  const output = lastLine.match(/.{1,60}/g)?.flatMap(line => line) ?? [];
+  const mid = lastLine.match(/.{1,63}/g)?.flatMap(line => line) ?? [];
+  const output = [mid[0], ...mid.slice(1).join('').match(/.{1,61}/g)?.flatMap(line => line) ?? []];
   return <>
-    <div className={`overlay ${freezeTime ? 'win' : ''}`}><pre>{left > 0 ? timeLeft : 'Containment Breached'}</pre></div>
     <pre className='terminal'>
+      <div className='red'>{(left > 0 ? timeLeft : 'Containment Breached').padStart(64, ' ')}</div>
       {history.slice(-12 * (page + 1)).slice(0, 12).map((h, i) => <div className={`${h.type}`}>{[...h.text].map(ch => zalgo(ch, zal)).join('')}{(queue.length > 0 && i === history.length - 1) ? '█' : ''}</div>)}
-      {page === 0 && queue.length === 0 && !lost && <div>{[...output.join('\n   ')].map(ch => zalgo(ch, zal)).join('')}</div>}
+      {page === 0 && queue.length === 0 && !lost && <div>{[...output.join('\n  ')].map(ch => zalgo(ch, zal)).join('')}</div>}
     </pre>
     <div className="crt" />
   </>
