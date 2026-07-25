@@ -443,8 +443,6 @@ const FileSystemRoot: INode = {
                     'Username: b_tables',
                     'Password: ***',
                     `${new Date(2026, 7 - 1, 17, 4, 23)}`,
-                    'b_tables@sys-main:/> cat /var/logs/error.log',
-                    zalgify('<CORRUPTED>'),
                     'b_tables@sys-main:/> netstat | grep 8013',
                     'tcp  0  0  10.240.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
                     'b_tables@sys-main:/> ip link show eth0',
@@ -1320,7 +1318,6 @@ export function Game() {
       document.removeEventListener('keydown', listener);
     }
   }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue, lost, tabCompleteResults, setTabCompleteResults, mute, setMute]);
-
 
   useEffect(() => {
     if (loadOnce) {
