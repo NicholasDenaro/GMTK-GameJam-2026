@@ -894,12 +894,19 @@ export function Game() {
       if (inputHistoryCursor === inputHistory.length) {
         setInputHistory(prev => [...prev, input]);
         setInputHistoryCursor(prev => prev + 1);
-      } else if (inputHistoryCursor % 1 === 0.5) {
-        setInputHistory(prev => [...prev.slice(0, inputHistoryCursor + 1), input, ...prev.slice(inputHistoryCursor + 1)]);
-        setInputHistoryCursor(prev => prev + 1);
       } else {
-        setInputHistory(prev => [...prev.slice(0, inputHistoryCursor + 1), input, ...prev.slice(inputHistoryCursor + 1)]);
-        setInputHistoryCursor(prev => prev + 0.5);
+        const shouldInsert = input !== inputHistory.at(inputHistoryCursor);
+        if (shouldInsert) {
+          if (inputHistoryCursor % 1 === 0.5) {
+            setInputHistory(prev => [...prev.slice(0, inputHistoryCursor + 1), input, ...prev.slice(inputHistoryCursor + 1)]);
+            setInputHistoryCursor(prev => prev + 1);
+          } else {
+            setInputHistory(prev => [...prev.slice(0, inputHistoryCursor + 1), input, ...prev.slice(inputHistoryCursor + 1)]);
+            setInputHistoryCursor(prev => prev + 1.5);
+          }
+        } else {
+          setInputHistoryCursor(prev => prev + 1);
+        }
       }
     }
     
