@@ -1285,7 +1285,7 @@ export function Game() {
           const current = traverse(builtPath, user.permissionLevel, 'list');
           const bin = traverse('/bin', user.permissionLevel);
 
-          const children = [current?.type === 'directory' ? current.children : [], !(input.startsWith('cd ') || input.startsWith('ls ')) && bin?.type === 'directory' ? bin.children : []].flatMap(v => v);
+          const children = [current?.type === 'directory' ? ((input.startsWith('cd ') || input.startsWith('ls ')) ? current.children.filter(c => c.type === 'directory') : current.children) : [], !(input.startsWith('cd ') || input.startsWith('ls ')) && bin?.type === 'directory' ? bin.children : []].flatMap(v => v);
 
           const found = children.filter(child => child.viewLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
           if (found.length === 1) {
