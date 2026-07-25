@@ -300,7 +300,11 @@ const FileSystemRoot: INode = {
           viewLevel: 0,
           type: 'file',
           ext: 'text',
-          content: '2026-07-19: System wide password reset. Default password "<year>_<firstname>". Please reset your passwords immediately.'
+          content: [
+            '2026-07-19: System wide password reset.',
+            'Default password "<year>_<firstname>".',
+            'Please reset your passwords immediately.'
+          ].join('\n')
         },
         {
           name: 'network.conf',
@@ -707,7 +711,7 @@ const FileSystemRoot: INode = {
         `1. Update the /tmp/${zalgify('CORRUPTED')} file with the key`,
         `2. Key format: "<last 4 hex of ${zalgify('CORRUPTED')}>-<port>-<${zalgify('CORRUPTED')}>"`,
         '3. Run chroot <process id> /sandbox',
-        '',
+        ' ',
         'Last run by: a_gile'
       ].join('\n')
     },
@@ -806,6 +810,7 @@ export function Game() {
   const [cycle, setCycle] = useState(false);
   const [cancelZalgo, setCancelZalgo] = useState(false);
   const [mute, setMute] = useState(false);
+  const [tabCycle, setTabCycle] = useState<{index: number, items: string[]} | undefined>();
 
   const setHistory = useCallback((val: Message[] | ((prev: Message[]) => Message[])) => {
     _setHistory(prev => {
@@ -1211,16 +1216,24 @@ export function Game() {
 
       switch (event.key) {
         case 'Backspace':
+          if (input.length > 0) {
+            flip();
+          } else {
+            // if (!mute) {
+            //   AudioSamples['Error'].play();
+            // }
+          }
           setInput(prev => prev.slice(0, cursor - 1) + prev.slice(cursor));
           setCursor(prev => Math.max(0, prev - 1));
           setTabCompleteResults(undefined);
-          flip();
+          setTabCycle(undefined);
           break;
         case 'Enter':
           handleCommand(input.trim(), true, 20, true);
           setInput('');
           setCursor(0);
           setTabCompleteResults(undefined);
+          setTabCycle(undefined);
           flip();
           break;
         case 'F1':
@@ -1246,17 +1259,22 @@ export function Game() {
           break;
         case 'ArrowLeft':
           setCursor(prev => Math.max(0, prev - 1));
+          setTabCycle(undefined);
           break;
         case 'ArrowRight':
           setCursor(prev => Math.min(prev + 1, input.length));
+          setTabCycle(undefined);
           break;
         case 'End':
           setCursor(input.length);
+          setTabCycle(undefined);
           break;
         case 'Home':
           setCursor(0);
+          setTabCycle(undefined);
           break;
         case 'ArrowDown':
+          setTabCycle(undefined);
           setInputHistoryCursor(prev => {
             const next = prev % 1 === 0.5 ? prev + 0.5 : Math.min(prev + 1, inputHistory.length);
             setInput(next < inputHistory.length ? inputHistory[next] : '');
@@ -1265,6 +1283,7 @@ export function Game() {
           });
           break;
         case 'ArrowUp':
+          setTabCycle(undefined);
           setInputHistoryCursor(prev => {
             const next = prev % 1 === 0.5 ? prev - 0.5 : Math.max(0, prev - 1);
             setInput(next < inputHistory.length ? inputHistory[next] : '');
@@ -1278,54 +1297,68 @@ export function Game() {
         case 'PageDown':
           setPage(prev => Math.max(0, prev - 1));
           break;
-        case 'Tab':
-          const segments = input.slice(0, cursor).split(' ');
-          const segment = segments.at(-1) ?? '';
-          const parts = segment.split('/');
-          // console.log('segment', segment, 'parts', parts);
-          // console.log('parts.slice(0, -1).join(\'/\')', parts.slice(0, -1).join('/'));
-          // console.log('pwd', pwd);
-          const builtPath = resolvePath(pwd, parts.slice(0, -1).join('/'));
-          // console.log('builtPath', builtPath);
-          const current = traverse(builtPath, user.permissionLevel, 'list');
-          const bin = traverse('/bin', user.permissionLevel);
-
-          const children = [current?.type === 'directory' ? ((input.startsWith('cd ') || input.startsWith('ls ')) ? current.children.filter(c => c.type === 'directory') : (input.startsWith('cat') ? current.children.filter(c => c.type === 'file') : current.children)) : [], !(input.startsWith('cd ') || input.startsWith('ls ') || input.startsWith('cat')) && bin?.type === 'directory' ? bin.children : []].flatMap(v => v);
-
-          const found = children.filter(child => child.viewLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
-          if (found.length === 1) {
-            const text = [...segments.slice(0, -1), [...parts.slice(0, -1), found[0].name].join('/')].join(' ');
+        case 'Tab': {
+          if (tabCycle) {
+            const segments = input.slice(0, cursor).split(' ');
+            const segment = segments.at(-1) ?? '';
+            const parts = segment.split('/');
+            setTabCycle(prev => prev && ({...prev, index: prev.index + 1}));
+            const leftText = [...segments.slice(0, -1), [...parts.slice(0, -1), tabCycle.items[(tabCycle.index + 1) % tabCycle.items.length]].join('/')].join(' ');
+            const text = leftText + input.slice(cursor);
             setInput(text);
-            setCursor(text.length);
-          }
-          if (found.length > 1 && !tabCompleteResults) {
-            const info = '  ' + found.map(f => f.name).join('  ');
-            setTabCompleteResults(info);
-            const directories = found.filter(f => f.type === 'directory');
-            if (directories.length > 0) {
-              const directory = '  ' + directories.map(f => f.name).join('  ');
-              setHistory(prev => [...prev, { type: 'directory', text: directory }]);
+            setCursor(leftText.length);
+          } else {
+            const segments = input.slice(0, cursor).split(' ');
+            const segment = segments.at(-1) ?? '';
+            const parts = segment.split('/');
+            // console.log('segment', segment, 'parts', parts);
+            // console.log('parts.slice(0, -1).join(\'/\')', parts.slice(0, -1).join('/'));
+            // console.log('pwd', pwd);
+            const builtPath = resolvePath(pwd, parts.slice(0, -1).join('/'));
+            // console.log('builtPath', builtPath);
+            const current = traverse(builtPath, user.permissionLevel, 'list');
+            const bin = traverse('/bin', user.permissionLevel);
+
+            const children = [current?.type === 'directory' ? ((input.startsWith('cd ') || input.startsWith('ls ')) ? current.children.filter(c => c.type === 'directory') : current.children) : [], !(input.startsWith('cd ') || input.startsWith('ls ') || input.startsWith('cat')) && bin?.type === 'directory' ? bin.children : []].flatMap(v => v);
+
+            const found = children.filter(child => child.viewLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
+            if (found.length === 1) {
+              const leftText = [...segments.slice(0, -1), [...parts.slice(0, -1), found[0].name].join('/')].join(' ');
+              const text = leftText + input.slice(cursor);
+              setInput(text);
+              setCursor(leftText.length);
             }
-            const executables = found.filter(f => f.type === 'executable');
-            if (executables.length > 0) {
-              const exec = '  ' + executables.map(f => f.name).join('  ');
-              setHistory(prev => [...prev, { type: 'executable', text: exec }]);
+            if (found.length > 1 && !tabCompleteResults) {
+              const info = '  ' + found.map(f => f.name).join('  ');
+              setTabCompleteResults(info);
+              setTabCycle({index: -1, items: found.map(f => f.name)});
+              const directories = found.filter(f => f.type === 'directory');
+              if (directories.length > 0) {
+                const directory = '  ' + directories.map(f => f.name).join('  ');
+                setHistory(prev => [...prev, { type: 'directory', text: directory }]);
+              }
+              const executables = found.filter(f => f.type === 'executable');
+              if (executables.length > 0) {
+                const exec = '  ' + executables.map(f => f.name).join('  ');
+                setHistory(prev => [...prev, { type: 'executable', text: exec }]);
+              }
+              const files = found.filter(f => f.type === 'file');
+              if (files.length > 0) {
+                const file = '  ' + files.map(f => f.name).join('  ');
+                setHistory(prev => [...prev, { type: 'file', text: file }]);
+              }
+              // setHistory(prev => [...prev, { type: (input.startsWith('cd ') || input.startsWith('ls ')) ? 'directory' : input.startsWith('cat ') ? 'file' : 'system', text: info }]);
             }
-            const files = found.filter(f => f.type === 'file');
-            if (files.length > 0) {
-              const file = '  ' + files.map(f => f.name).join('  ');
-              setHistory(prev => [...prev, { type: 'file', text: file }]);
+            if (found.length === 0 && !mute) {
+              AudioSamples['Error'].play();
             }
-            // setHistory(prev => [...prev, { type: (input.startsWith('cd ') || input.startsWith('ls ')) ? 'directory' : input.startsWith('cat ') ? 'file' : 'system', text: info }]);
           }
-          if (found.length === 0 && !mute) {
-            AudioSamples['Error'].play();
-          }
-          break;
+        } break;
         default:
           setInput(prev => prev.slice(0, cursor) + event.key + prev.slice(cursor));
           setCursor(prev => prev + 1);
           setTabCompleteResults(undefined);
+          setTabCycle(undefined);
           flip();
           break;
       }
@@ -1339,7 +1372,7 @@ export function Game() {
     return () => {
       document.removeEventListener('keydown', listener);
     }
-  }, [handleCommand, history, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue, lost, tabCompleteResults, setTabCompleteResults, mute, setMute]);
+  }, [handleCommand, history, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue, lost, tabCompleteResults, setTabCompleteResults, mute, setMute, tabCycle, setTabCycle]);
 
   useEffect(() => {
     if (loadOnce) {
