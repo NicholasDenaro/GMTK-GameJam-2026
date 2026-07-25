@@ -2,6 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import './Game.css';
 import { AudioSamples, randomFlip } from './App';
 
+const adapterSubnets = [
+'240',
+'58',
+'35',
+'124',
+'192',
+'217',
+];
 
 const ZalgoCodes = [
   0x300,
@@ -1091,14 +1099,14 @@ export function Game() {
           return pid;
         }
         function randomName() {
-          let name = `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`;
+          let name = `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`.toLowerCase();
           while (name === 'ai') {
-            name = `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`;
+            name = `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`.toLowerCase();
           }
           return name;
         }
-        const ports: Message[] = new Array(99).fill(0).map(_ => ({ type: 'system', text: `${Math.random() < 0.5 ? 'tcp' : 'udp'}  0  0  ${Math.random() < 0.5 ? `10.240.0.1:${randomPort()}` : `127.0.0.1:${randomPort()} `}  0.0.0.0:*  LISTEN ${randomPid()}/${randomName()}_core`}));
-        ports.splice(Math.floor(Math.random() * 99), 0, { type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` });
+        const ports: (Message & { timeout?: number })[] = new Array(29).fill(0).map(_ => ({ type: 'system', text: `${Math.random() < 0.5 ? 'tcp' : 'udp'}  0  0  ${Math.random() < 0.8 ? `10.${adapterSubnets.at(Math.random() * adapterSubnets.length)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}:${randomPort()}`.padEnd('10.255.255.255:8888'.length, ' ') : `127.0.0.1:${randomPort()}`.padEnd('10.255.255.255:8888'.length, ' ') }  0.0.0.0:*  LISTEN ${randomPid()}/${randomName()}_core`, tmieout: 5}));
+        ports.splice(6 + Math.floor(Math.random() * 8), 0, { type: 'system', text: `tcp  0  0  ${`10.35.0.1:${currentPort}`.padEnd('10.255.255.255:8888'.length, ' ')}  0.0.0.0:*  LISTEN ${finalPid}/ai_core`, timeout: 5 });
         output.push(...ports);
       } break;
       case 'chroot': {
@@ -1152,7 +1160,7 @@ export function Game() {
       }
     }
 
-    op(prev => [...prev, ...output.filter(m => m.text?.includes(grepString))]);
+    op(prev => [...prev, ...output.filter(m => grepString ? m.text?.includes(grepString) : m.text)]);
   }, [setHistory, setInput, pwd, setPwd, currentPort, user, setUser, setFreezeTime, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor]);
 
   useEffect(() => {
@@ -1263,7 +1271,7 @@ export function Game() {
           const current = traverse(builtPath, user.permissionLevel, 'list');
           const bin = traverse('/bin', user.permissionLevel);
 
-          const children = [current?.type === 'directory' ? current.children : [], bin?.type === 'directory' ? bin.children : []].flatMap(v => v);
+          const children = [current?.type === 'directory' ? current.children : [], !(input.startsWith('cd ') || input.startsWith('ls ')) && bin?.type === 'directory' ? bin.children : []].flatMap(v => v);
 
           const found = children.filter(child => child.viewLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
           if (found.length === 1) {
