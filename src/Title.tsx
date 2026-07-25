@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import './Title.css';
+import { AudioSamples } from './App';
 
 let loadTitleOnce = true;
 
@@ -47,15 +48,12 @@ export function Title({callback}: {callback: () => void}) {
 
 
   useEffect(() => {
-    console.log('working off queue');
-    console.log('queue', queue);
     let current = queue[0];
     while (current && !current.text) {
       queue.shift();
       current = queue[0];
     }
     if (!current) {
-      console.log('nothing in queue...');
       return;
     }
 
@@ -76,6 +74,8 @@ export function Title({callback}: {callback: () => void}) {
       });
 
       current.index++;
+      const sample = ['Flip1', 'Flip2', 'Flip3'].at(Math.floor(Math.random() * 3));
+      AudioSamples[sample!].play();
       if (current.text.length === 0) {
         queue.shift();
       }

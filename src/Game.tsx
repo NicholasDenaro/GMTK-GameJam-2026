@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import './Game.css';
+import { AudioSamples } from './App';
 
 
 const ZalgoCodes = [
@@ -42,8 +43,8 @@ function zalgo(ch: string, zalgo: number) {
   return ch + (ZalgoCodes.filter(_ => Math.random() < 0.5).sort((__, ___) => Math.random() - 0.5).join('')).slice(0, ([0, 0, 1, 5, 50].at((Math.random() * zalgo) * 5)));
 }
 
-function zalgify(text: string) {
-  return [...text].map(ch => zalgo(ch, 0.9)).join('');
+function zalgify(text: string, strength: number = 0.9) {
+  return [...text].map(ch => zalgo(ch, strength)).join('');
 }
 
 let loadOnce = true;
@@ -714,7 +715,8 @@ const FileSystemRoot: INode = {
         'Developed by: Nicholas (Ninkolas) Denaro',
         'Code: https://github.com/NicholasDenaro/GMTK-GameJam-2026',
         'Developed using React',
-        'Built with Vite'
+        'Built with Vite',
+        'Beep SFX created with BeepBox'
       ].join('\n')
     }
   ]
@@ -782,6 +784,7 @@ export function Game() {
   const [start] = useState(new Date());
   const [history, _setHistory] = useState<Message[]>([]);
   const [input, setInput] = useState<string>('');
+  const [tabCompleteResults, setTabCompleteResults] = useState<string | undefined>();
   const [_permissions, _setPermissions] = useState(0);
   const [pwd, setPwd] = useState(FileSystemRoot.name);
   const [cursor, setCursor] = useState(0);
@@ -795,6 +798,7 @@ export function Game() {
   const [lost, setLost] = useState(false);
   const [cycle, setCycle] = useState(false);
   const [cancelZalgo, setCancelZalgo] = useState(false);
+  const [mute, setMute] = useState(false);
 
   const setHistory = useCallback((val: Message[] | ((prev: Message[]) => Message[])) => {
     _setHistory(prev => {
@@ -852,6 +856,10 @@ export function Game() {
       });
 
       current.index++;
+      if (!mute) {
+        const sample = ['Flip1', 'Flip2', 'Flip3'].at(Math.floor(Math.random() * 3));
+        AudioSamples[sample!].play();
+      }
       if (current.text.length === 0) {
         queue.shift();
       }
@@ -1166,24 +1174,39 @@ export function Game() {
         })
         return;
       }
+
+      function flip() {
+        if (mute) {
+          return;
+        }
+        const sample = ['Flip1', 'Flip2', 'Flip3'].at(Math.floor(Math.random() * 3));
+        AudioSamples[sample!].play();
+      }
+
       switch (event.key) {
         case 'Backspace':
           setInput(prev => prev.slice(0, cursor - 1) + prev.slice(cursor));
           setCursor(prev => Math.max(0, prev - 1));
+          setTabCompleteResults(undefined);
+          flip();
           break;
         case 'Enter':
           handleCommand(input.trim(), true, 20, true);
           setInput('');
           setCursor(0);
+          setTabCompleteResults(undefined);
+          flip();
           break;
         case 'F1':
+          setMute(prev => !prev);
+          break;
+        case 'F2':
           setCancelZalgo(prev => !prev);
           break;
         case 'Shift':
         case 'Control':
         case 'Meta':
         case 'Escape':
-        case 'F2':
         case 'F3':
         case 'F4':
         case 'F5':
@@ -1239,28 +1262,30 @@ export function Game() {
           const builtPath = resolvePath(pwd, parts.slice(0, -1).join('/'));
           console.log('builtPath', builtPath);
           const current = traverse(builtPath, user.permissionLevel, 'list');
-          if (current?.type === 'directory') {
-            const found = current.children.filter(child => child.viewLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
-            if (found.length === 1) {
-              const text = [...segments.slice(0, -1), [...parts.slice(0, -1), found[0].name].join('/')].join(' ');
-              setInput(text);
-              setCursor(text.length);
-            }
-            break;
+          const bin = traverse('/bin', user.permissionLevel);
+
+          const children = [current?.type === 'directory' ? current.children : [], bin?.type === 'directory' ? bin.children : []].flatMap(v => v);
+
+          const found = children.filter(child => child.viewLevel <= user.permissionLevel).filter(child => child.name.startsWith(parts.at(-1) ?? ''));
+          if (found.length === 1) {
+            const text = [...segments.slice(0, -1), [...parts.slice(0, -1), found[0].name].join('/')].join(' ');
+            setInput(text);
+            setCursor(text.length);
           }
-          const dir = traverse('/bin', user.permissionLevel);
-          if (dir?.type === 'directory') {
-            const found = dir.children.filter(child => child.permissionLevel <= user.permissionLevel).filter(child => child.name.startsWith(segment));
-            if (found.length === 1) {
-              const text = [...segments.slice(0, -1), found[0].name].join(' ');
-              setInput(text);
-              setCursor(text.length);
-            }
+          if (found.length > 1 && !tabCompleteResults) {
+            const info = '  ' + found.map(f => f.name).join('  ');
+            setTabCompleteResults(info);
+            setHistory(prev => [...prev, { type: 'system', text: info }]);
+          }
+          if (found.length === 0 && !mute) {
+            AudioSamples['Error'].play();
           }
           break;
         default:
           setInput(prev => prev.slice(0, cursor) + event.key + prev.slice(cursor));
           setCursor(prev => prev + 1);
+          setTabCompleteResults(undefined);
+          flip();
           break;
       }
       setBlink(false);
@@ -1273,7 +1298,7 @@ export function Game() {
     return () => {
       document.removeEventListener('keydown', listener);
     }
-  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue, lost]);
+  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue, lost, tabCompleteResults, setTabCompleteResults, mute, setMute]);
 
 
   useEffect(() => {
@@ -1297,8 +1322,11 @@ export function Game() {
   useEffect(() => {
     if (lost) {
       queue.push({ type: 'system', index: 0, timeout: 20, text: 'Network error: Connection timed out'});
+      if (!mute) {
+        AudioSamples['Error-loud'].play();
+      }
     }
-  }, [lost]);
+  }, [lost, mute]);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -1325,11 +1353,40 @@ export function Game() {
   const lastLine = `${user.name}@sys-main:${pwd || '/'}> ${input.slice(0, cursor)}${blink ? ' ' : '█'}${input.slice(cursor)}`;
   const mid = lastLine.match(/.{1,63}/g)?.flatMap(line => line) ?? [];
   const output = [mid[0], ...mid.slice(1).join('').match(/.{1,61}/g)?.flatMap(line => line) ?? []];
+
+  const timerText = (left > 0 ? timeLeft : 'Containment Breached')
+    .padStart(64, ' ')
+    .split('')
+    .map((ch, i) => {
+      if (i === 0) {
+        return mute ? '🔇' : '🔊'
+      }
+
+      if (i >= 2 && i < 6) {
+        return '(F1)'.at(i - 2);
+      }
+
+      if (i >= 8 && i < 13) {
+        return (cancelZalgo ? '\u0336' : '') + 'zalgo'.at(i - 8);
+      }
+
+      if (i >= 14 && i < 18) {
+        return '(F2)'.at(i - 14);
+      }
+
+      if (i > 20 && ch !== ' ') {
+        return zalgify(ch, zal / 0.4);
+      }
+
+      return ch;
+    })
+    .join('');
+
   return <>
     <pre className='terminal'>
-      <div className='red'>{(left > 0 ? timeLeft : 'Containment Breached').padStart(64, ' ')}</div>
-      {history.slice(-12 * (page + 1)).slice(0, 12).map((h, i) => <div className={`${h.type}`}>{[...h.text].map(ch => zalgo(ch, zal)).join('')}{(queue.length > 0 && i === history.length - 1) ? '█' : ''}</div>)}
-      {page === 0 && queue.length === 0 && !lost && <div>{[...output.join('\n  ')].map(ch => zalgo(ch, zal)).join('')}</div>}
+      <div><span className='system'>{timerText.slice(0, timerText.lastIndexOf('   '))}</span><span className='red'>{timerText.slice(timerText.lastIndexOf('   '))}</span></div>
+      {history.slice(-12 * (page + 1)).slice(0, 12).map((h, i) => <div className={`${h.type}`}>{[...h.text].map(ch => ch !== ' ' ? zalgo(ch, zal) : ch).join('')}{(queue.length > 0 && i === history.length - 1) ? '█' : ''}</div>)}
+      {page === 0 && queue.length === 0 && !lost && <div>{[...output.join('\n  ')].map(ch => ch !== ' ' ? zalgo(ch, zal) : ch).join('')}</div>}
     </pre>
     <div className="crt" />
   </>
