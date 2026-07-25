@@ -468,7 +468,7 @@ const FileSystemRoot: INode = {
                 'a_gile@sys-main:/> cd /sandbox',
                 'a_gile@sys-main:/sanbox> run launch_core.sh --port 8014',
                 'a_gile@sys-main:/sanbox> netstat | grep 8014',
-                'tcp  0  0  127.0.0.1:5668  0.0.0.0:*  LISTEN 8014/sbx_mgrd',
+                'tcp  0  0  127.0.0.1:5668   0.0.0.0:*  LISTEN 8014/sbx_mgrd',
                 `tcp  0  0  10.240.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
                 'a_gile@sys-main:/sanbox> cat /var/logs/info.log',
                 zalgify('<CORRUPTED>'),
@@ -609,8 +609,8 @@ const FileSystemRoot: INode = {
         'Automated containment processes started.',
         'Process frozen. Partial containment secured.',
         'Freeze will only last another 15 minutes.',
-        'Complete the containment procedure.',
-        'For assistence, run "help" to show the commands or "help help" to see what help does'
+        'Containment procedure found in /containment_procedure.txt.',
+        'For assistence, run "help" or "help help"'
       ].join('\n')
     },
     {
@@ -820,14 +820,16 @@ export function App() {
         if (dir && dir.type === 'directory') {
           if (args.length === 0) {
             const lines: Message[] = [...dir.children].filter(child => child.permissionLevel <= user.permissionLevel).sort((a, b) => a.name.localeCompare(b.name)).map(child => ({ type: 'system', text: child.name }));
-            op(prev => [...prev, ...lines]);
+            output.push(
+              {type: 'system', text: 'Available commands:'},
+              ...lines
+            );
           } else if (dir.children.filter(child => child.permissionLevel <= user.permissionLevel && child.name === args[0])) {
             switch (args[0]) {
               case 'help':
                 output.push(
                   { type: 'system', text: 'help [<command>]' },
-                  { type: 'system', text: 'command is optional, when included provides more details about that command' },
-                  { type: 'system', text: 'displays avialable commands' });
+                  { type: 'system', text: 'command is optional, when included provides more details about that command, otherwise displays available commands' })
                 break;
               case 'cd':
                 output.push(
@@ -963,7 +965,14 @@ export function App() {
           }
           return pid;
         }
-        const ports: Message[] = new Array(99).fill(0).map(_ => ({ type: 'system', text: `${Math.random() < 0.5 ? 'tcp' : 'udp'}  0  0  ${Math.random() < 0.5 ? `10.240.0.1:${randomPort()}` : `127.0.0.1:${randomPort()} `}  0.0.0.0:*  LISTEN ${randomPid()}/${btoa(Math.random() + '').slice(0, 7)}`}));
+        function randomName() {
+          let name = `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`;
+          while (name === 'ai') {
+            name = `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`;
+          }
+          return name;
+        }
+        const ports: Message[] = new Array(99).fill(0).map(_ => ({ type: 'system', text: `${Math.random() < 0.5 ? 'tcp' : 'udp'}  0  0  ${Math.random() < 0.5 ? `10.240.0.1:${randomPort()}` : `127.0.0.1:${randomPort()} `}  0.0.0.0:*  LISTEN ${randomPid()}/${randomName()}_core`}));
         ports.splice(Math.floor(Math.random() * 99), 0, { type: 'system', text: `tcp  0  0  10.240.0.1:${currentPort}  0.0.0.0:*  LISTEN ${finalPid}/ai_core` });
         output.push(...ports);
       } break;
