@@ -449,7 +449,7 @@ const FileSystemRoot: INode = {
                     'eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.240.0.1 link/ether 00:1b:44:10:3a:b7 brd ff:ff:ff:ff:ff:ff',
                     'b_tabs@sys-main:/> cat /var/logs/error.log | grep SESSION',
                     logFileMessage(7, 1, 45, 'ERROR: SESSION RESET 0x4A'),
-                    'b_tables@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
+                    'b_tables@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/session_lock',
                     'b_tables@sys-main:/> chroot 4537 /sandbox',
                     'Containment Successful',
                     'b_tables@sys-main:/> echo "Containment Successful. Time to go home." > ~/notes.txt',
