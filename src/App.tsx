@@ -286,7 +286,7 @@ const FileSystemRoot: INode = {
           ].join('\n')
         },
         {
-          name: 'notice.txt',
+          name: 'NOTICE_ASAP.txt',
           permissionLevel: 0,
           viewLevel: 0,
           type: 'file',
@@ -434,12 +434,14 @@ const FileSystemRoot: INode = {
                     'Username: b_tables',
                     'Password: ***',
                     `${new Date(2026, 7 - 1, 17, 4, 23)}`,
-                    'b_tables@sys-main:/> cat /var/logs/debug.info',
+                    'b_tables@sys-main:/> cat /var/logs/error.log',
                     zalgify('<CORRUPTED>'),
                     'b_tables@sys-main:/> netstat | grep 8013',
                     'tcp  0  0  10.240.0.1:8013  0.0.0.0:*  LISTEN 4537/ai_core',
                     'b_tables@sys-main:/> ip link show eth0',
                     'eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.240.0.1 link/ether 00:1b:44:10:3a:b7 brd ff:ff:ff:ff:ff:ff',
+                    'b_tabs@sys-main:/> cat /var/logs/error.log | grep SESSION',
+                    logFileMessage(7, 1, 45, 'ERROR: SESSION RESET 0x4A'),
                     'b_tables@sys-main:/> echo "3AB7-8013-0x4A" > /tmp/.session_lock',
                     'b_tables@sys-main:/> chroot 4537 /sandbox',
                     'Containment Successful',
@@ -511,6 +513,9 @@ const FileSystemRoot: INode = {
                 `tcp  0  0  10.35.0.1:8014  0.0.0.0:*  LISTEN ${finalPid}/ai_core`,
                 'a_gile@sys-main:/sanbox> cat /var/logs/debug.log',
                 'Permission Denied',
+                'a_gile@sys-main:/sanbox> echo "3AB7-8014-0x4A" > /tmp/session_lock',
+                `a_gile@sys-main:/sanbox> chroot ${finalPid} /sandbox`,
+                'Incorrect lock. Containment failed.',
                 `a_gile@sys-main:/sanbox> kill -9 ${finalPid}`,
                 `Permission Denied`,
                 'Network error: Connection timed out'
@@ -530,8 +535,9 @@ const FileSystemRoot: INode = {
                   viewLevel: 1,
                   content: [
                     'HOST=sys-main2',
-                    `TEST_USER=${btoa('b_tables')}`,
-                    `TEST_PASS=${btoa(bTablesPass)}`
+                    `TEST_USER=${btoa('b_tables')} #encoded`,
+                    `TEST_PASS=${btoa(bTablesPass)} #encoded`,
+                    `DECODER=/bin/decode`
                   ].join('\n'),
                 },
                 ...toDirectories(1, 
@@ -616,21 +622,20 @@ const FileSystemRoot: INode = {
               ext: 'text',
               content: [
                 zalgify('<CORRUPTED>'),
-                logFileMessage(0, 24, 10, 'ERROR: CONNECTION RESET 0x4A'),
-                logFileMessage(0, 24, 15, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(0, 24, 10, 'ERROR: SESSION RESET 0x4A'),
+                logFileMessage(0, 24, 15, 'ERROR: SESSION RESET 0x4A'),
                 logFileMessage(0, 24, 20, 'FATAL: SEGMENTATION FAULT 0x01'),
                 zalgify('<CORRUPTED>'),
-                logFileMessage(0, 50, 12, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(0, 50, 12, 'ERROR: SESSION RESET 0x4A'),
                 zalgify('<CORRUPTED>'),
-                logFileMessage(1, 43, 52, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(1, 43, 52, 'ERROR: SESSION RESET 0x4A'),
                 zalgify('<CORRUPTED>'),
-                logFileMessage(2, 25, 8, 'ERROR: CONNECTION RESET 0x4A'),
+                logFileMessage(2, 25, 8, 'ERROR: SESSION RESET 0x4A'),
                 logFileMessage(2, 25, 16, 'ERROR: CONNECTION RESET 0x4A'),
                 logFileMessage(2, 25, 25, 'FATAL: SEGMENTATION FAULT 0x01'),
                 logFileMessage(3, 25, 3, 'ERROR: CONNECTION RESET 0x4A'),
                 zalgify('<REDACTED>'),
-                logFileMessage(3, 28, 18, 'ERROR: CONNECTION RESET 0x6C'),
-                logFileMessage(3, 30, 21, 'FATAL: SEGMENTATION FAULT 0x02'),
+                logFileMessage(3, 28, 18, 'ERROR: SESSION RESET 0x6C'),
                 zalgify('<CORRUPTED>'),
                 logFileMessage(4, 27, 10, 'ERROR: CONNECTION RESET 0xD2'),
                 zalgify('<CORRUPTED>'),
@@ -1079,7 +1084,7 @@ export function App() {
               output.push({ type: 'system', text: `Containment successful.` });
               setFreezeTime(new Date());
             } else {
-              output.push({ type: 'system', text: `Containment failed.` });
+              output.push({ type: 'system', text: `Incorrect lock. Containment failed.` });
             }
           } else {
             output.push({ type: 'system', text: `Containment failed.` });
