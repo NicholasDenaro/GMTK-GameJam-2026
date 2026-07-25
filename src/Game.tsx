@@ -1093,7 +1093,7 @@ export function Game() {
           { adapter: 'eth5', type: 'system', text: `eth5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP 10.217.0.1 link/ether 7f:1a:33:27:35:02 brd ff:ff:ff:ff:ff:ff` },
         ];
         const adapter = args[2];
-        output.push(...adapters.filter(a => a.adapter === adapter));
+        output.push(...adapters.filter(a => !adapter || a.adapter === adapter));
       } break;
       case 'netstat': {
         function randomPort() {
