@@ -687,7 +687,7 @@ const FileSystemRoot: INode = {
       ext: 'text',
       content: [
         `1. Update the /tmp/${zalgify('CORRUPTED')} file with the key`,
-        `2. Key format: "<last 4 hex of ${zalgify('CORRUPTED') }>-<port>-<error ${zalgify('CORRUPTED')}>"`,
+        `2. Key format: "<last 4 hex of ${zalgify('CORRUPTED')}>-<port>-<${zalgify('CORRUPTED')}>"`,
         '3. Run chroot <process id> /sandbox',
         '',
         'Last run by: a_gile'
@@ -777,9 +777,20 @@ export function App() {
       const next = [...typeof val === 'function' ? val(prev) : val];
       for (let i = 0; i < next.length; i++ ) {
         const line = next[i];
-        const split: string[] = line?.text?.match(/.{1,63}/g) ?? [];
-        if (split && split.length > 1) {
-          next.splice(i, 1, ...split.map(s => ({type: line.type, text: s})));
+        const split: string[] = [''];
+        let count = 0;
+        for (let ch of line?.text ?? '') {
+          if (ch.charCodeAt(0) < 127) {
+            count++;
+          }
+          split[split.length - 1] += ch;
+          if (count === 63) {
+            count = 0;
+            split.push('');
+          }
+        }
+        if (split.filter(Boolean).length > 1) {
+          next.splice(i, 1, ...split.filter(Boolean).map(s => ({type: line.type, text: s})));
         }
       }
       return next.slice(Math.max(0, next.length - 120));
@@ -989,7 +1000,7 @@ export function App() {
         console.log('resolved path', path);
         const file = traverse(path, user.permissionLevel);
         if (file && file.type === 'file') {
-          output.push(...file.content.split('\n').map(line => line.match(/.{1,60}/g)).flatMap(line => line).map(line => ({type: 'system', text: line}) as Message));
+          output.push(...file.content.split('\n').map(line => ({type: 'system', text: line}) as Message));
         } else if (file) {
           output.push({type: 'system', text: `'${path}' is not a text file`});
         } else {
