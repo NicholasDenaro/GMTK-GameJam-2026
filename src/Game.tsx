@@ -1275,11 +1275,11 @@ export function Game() {
           const segments = input.slice(0, cursor).split(' ');
           const segment = segments.at(-1) ?? '';
           const parts = segment.split('/');
-          console.log('segment', segment, 'parts', parts);
-          console.log('parts.slice(0, -1).join(\'/\')', parts.slice(0, -1).join('/'));
-          console.log('pwd', pwd);
+          // console.log('segment', segment, 'parts', parts);
+          // console.log('parts.slice(0, -1).join(\'/\')', parts.slice(0, -1).join('/'));
+          // console.log('pwd', pwd);
           const builtPath = resolvePath(pwd, parts.slice(0, -1).join('/'));
-          console.log('builtPath', builtPath);
+          // console.log('builtPath', builtPath);
           const current = traverse(builtPath, user.permissionLevel, 'list');
           const bin = traverse('/bin', user.permissionLevel);
 
@@ -1317,7 +1317,7 @@ export function Game() {
     return () => {
       document.removeEventListener('keydown', listener);
     }
-  }, [handleCommand, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue, lost, tabCompleteResults, setTabCompleteResults, mute, setMute]);
+  }, [handleCommand, history, input, setInput, pwd, cursor, setCursor, setPage, user, inputHistory, setInputHistory, inputHistoryCursor, setInputHistoryCursor, queue, lost, tabCompleteResults, setTabCompleteResults, mute, setMute]);
 
   useEffect(() => {
     if (loadOnce) {
@@ -1340,6 +1340,7 @@ export function Game() {
   useEffect(() => {
     if (lost) {
       queue.push({ type: 'system', index: 0, timeout: 20, text: 'Network error: Connection timed out'});
+      setPage(0);
       if (!mute) {
         AudioSamples['Error-loud'].play();
       }
