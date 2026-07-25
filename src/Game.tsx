@@ -1105,7 +1105,7 @@ export function Game() {
           }
           return name;
         }
-        const ports: (Message & { timeout?: number })[] = new Array(29).fill(0).map(_ => ({ type: 'system', text: `${Math.random() < 0.5 ? 'tcp' : 'udp'}  0  0  ${Math.random() < 0.8 ? `10.${adapterSubnets.at(Math.random() * adapterSubnets.length)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}:${randomPort()}`.padEnd('10.255.255.255:8888'.length, ' ') : `127.0.0.1:${randomPort()}`.padEnd('10.255.255.255:8888'.length, ' ') }  0.0.0.0:*  LISTEN ${randomPid()}/${randomName()}_core`, tmieout: 5}));
+        const ports: (Message & { timeout?: number })[] = new Array(29).fill(0).map(_ => ({ type: 'system', text: `${Math.random() < 0.5 ? 'tcp' : 'udp'}  0  0  ${Math.random() < 0.8 ? `10.${adapterSubnets.at(Math.random() * adapterSubnets.length)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}:${randomPort()}`.padEnd('10.255.255.255:8888'.length, ' ') : `127.0.0.1:${randomPort()}`.padEnd('10.255.255.255:8888'.length, ' ') }  0.0.0.0:*  LISTEN ${randomPid()}/${randomName()}_core`, timeout: 5}));
         ports.splice(6 + Math.floor(Math.random() * 8), 0, { type: 'system', text: `tcp  0  0  ${`10.35.0.1:${currentPort}`.padEnd('10.255.255.255:8888'.length, ' ')}  0.0.0.0:*  LISTEN ${finalPid}/ai_core`, timeout: 5 });
         output.push(...ports);
       } break;
