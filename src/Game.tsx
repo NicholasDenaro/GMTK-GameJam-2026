@@ -900,6 +900,7 @@ export function Game() {
         setInputHistory(prev => [...prev.slice(0, inputHistoryCursor + 1), input, ...prev.slice(inputHistoryCursor + 1)]);
         setInputHistoryCursor(prev => prev + 1);
       } else {
+        setInputHistory(prev => [...prev.slice(0, inputHistoryCursor + 1), input, ...prev.slice(inputHistoryCursor + 1)]);
         setInputHistoryCursor(prev => prev + 0.5);
       }
     }
@@ -1002,6 +1003,11 @@ export function Game() {
                   { type: 'system', text: 'netstat' },
                   { type: 'system', text: 'displays information about processes connected to the network' });
                 break;
+              case 'chroot':
+                output.push(
+                  { type: 'system', text: 'chroot <process id> <path>' },
+                  { type: 'system', text: 'displays information about processes connected to the network' });
+                break;
             }
           }
         }
@@ -1045,6 +1051,8 @@ export function Game() {
           output.push(...file.content.split('\n').map(line => ({type: 'system', text: line}) as Message));
         } else if (file) {
           output.push({type: 'system', text: `'${path}' is not a text file`});
+        } else if (traverse(path, 10)) {
+          output.push({ type: 'system', text: `Permission Denied` });
         } else {
           output.push({ type: 'system', text: `'${path}' not found` });
         }
@@ -1111,10 +1119,10 @@ export function Game() {
       } break;
       case 'chroot': {
         if (args.length < 2) {
-          output.push({ type: 'system', text: `Command format: chroot <pid> <path>` });
+          output.push({ type: 'system', text: `Command format: chroot <process id> <path>` });
         }
-        if (args[0] === ''+ finalPid && args[1] === '/sandbox') {
-          const file = traverse('/tmp/session_lock', user.permissionLevel);
+        if (args[0] === '' + finalPid && args[1] === '/sandbox') {
+          const file = traverse('/tmp/session_lock', 10);
           if (file && file.type === 'file') {
             if (file.content === `${finalMac}-${currentPort}-${errorCode}`) {
               output.push({ type: 'system', text: `Containment successful.` });
@@ -1125,6 +1133,8 @@ export function Game() {
           } else {
             output.push({ type: 'system', text: `Containment failed.` });
           }
+        } else if (args[0] !== '' + finalPid) {
+          output.push({ type: 'system', text: `Process Id not found.` });
         } else {
           output.push({ type: 'system', text: `Permission Denied` });
         }
@@ -1148,7 +1158,11 @@ export function Game() {
           output.push({ type: 'system', text: `Command format: decode <base64_encoded_string>` });
           break;
         }
-        output.push({ type: 'system', text: atob(args[0]) });
+        try {
+          output.push({ type: 'system', text: atob(args[0]) });
+        } catch {
+          output.push({ type: 'system', text: `Error: invalid string` });
+        }
         
       } break;
       case 'exit': {
