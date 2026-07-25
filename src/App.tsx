@@ -1146,7 +1146,7 @@ export function App() {
           setCursor(prev => Math.max(0, prev - 1));
           break;
         case 'Enter':
-          handleCommand(input, true, 20, true);
+          handleCommand(input.trim(), true, 20, true);
           setInput('');
           setCursor(0);
           break;
