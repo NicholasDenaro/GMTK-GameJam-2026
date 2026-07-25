@@ -1,19 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
 import './Title.css';
 
-let loadOnce = true;
+let loadTitleOnce = true;
 
 type Message = {
   type: 'system' | 'user';
   text: string;
 }
 
-
 type QueuedMessages = (Message & { index: number, timeout: number[] })[];
 const queue: QueuedMessages = [];
 
 export function Title({callback}: {callback: () => void}) {
   const [history, _setHistory] = useState<Message[]>([]);
+  const [__, setRedraw] = useState(false);
+
+  const redraw = useCallback(() => {
+    setRedraw(prev => !prev);
+  }, [setRedraw]);
 
   const setHistory = useCallback((val: Message[] | ((prev: Message[]) => Message[])) => {
     _setHistory(prev => {
@@ -43,12 +47,15 @@ export function Title({callback}: {callback: () => void}) {
 
 
   useEffect(() => {
+    console.log('working off queue');
+    console.log('queue', queue);
     let current = queue[0];
     while (current && !current.text) {
       queue.shift();
       current = queue[0];
     }
     if (!current) {
+      console.log('nothing in queue...');
       return;
     }
 
@@ -77,21 +84,23 @@ export function Title({callback}: {callback: () => void}) {
     return () => {
       clearTimeout(id);
     }
-  }, [queue[0]?.text, setHistory]);
+  }, [queue.length, queue[0]?.text, setHistory]);
 
   useEffect(() => {
-    if (loadOnce) {
+    if (loadTitleOnce) {
       queue.push({ type: 'system', text: '___________', index: 0, timeout: [20] });
       queue.push({ type: 'user',   text: '/> CHROOT', index: 0, timeout: [20] });
       queue.push({ type: 'system', text: '‾‾‾‾‾‾‾‾‾‾‾', index: 0, timeout: [20] });
       queue.push({ type: 'system', text: '[=====BOOTING=====]', index: 0, timeout: [20, 20, 150, 20, 20, 20, 20, 150, 150, 150, 150] });
     }
 
+    redraw();
+
     setTimeout(() => {
       callback();
     }, 2500);
 
-    loadOnce = false;
+    loadTitleOnce = false;
   }, []);
 
   return <>
