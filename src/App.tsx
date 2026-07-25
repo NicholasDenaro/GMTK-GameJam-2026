@@ -657,6 +657,7 @@ const FileSystemRoot: INode = {
               ext: 'text',
               content: [
                 'Forking process',
+                'Port modified'
               ].join('\n')
             }
           ]
@@ -763,7 +764,7 @@ export function App() {
   const [cursor, setCursor] = useState(0);
   const [blink, setBlink] = useState(false);
   const [page, setPage] = useState(0);
-  const [currentPort, setCurrentPort] = useState(0);
+  const [currentPort, setCurrentPort] = useState(8000 + Math.floor(Math.random() * 1000));
   const [user, setUser] = useState({permissionLevel: 0, name: 'user'});
   const [freezeTime, setFreezeTime] = useState<Date | null>(null);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
@@ -1270,41 +1271,41 @@ export function App() {
       // queue.push({ type: 'system', text: '\n', index: 0, timeout: 20 });
     }
 
-    const updater = () => {
-      if (freezeTime) {
-        return;
-      }
+    // const updater = () => {
+    //   if (freezeTime) {
+    //     return;
+    //   }
 
-      const port = 8000 + Math.floor(Math.random() * 1000);
-      const debugLog = traverse('/var/logs/debug.log', 10);
-      if (debugLog && debugLog.type === 'file') {
-        console.log('updated debug log');
-        debugLog.content = [
-          ...debugLog.content.split('\n'),
-          'Cycling process',
-          'Starting process...',
-          'Checking ports...',
-          `Using port ${port}`
-        ].join('\n');
-      }
-      const infoLog = traverse('/var/logs/info.log', 10);
-      if (infoLog && infoLog.type === 'file') {
-        infoLog.content = [
-          ...infoLog.content.split('\n'),
-          'Process stopped',
-          'Port modified',
-        ].join('\n');
-      }
-      setCurrentPort(port);
-    }
+    //   const port = 8000 + Math.floor(Math.random() * 1000);
+    //   const debugLog = traverse('/var/logs/debug.log', 10);
+    //   if (debugLog && debugLog.type === 'file') {
+    //     console.log('updated debug log');
+    //     debugLog.content = [
+    //       ...debugLog.content.split('\n'),
+    //       'Cycling process',
+    //       'Starting process...',
+    //       'Checking ports...',
+    //       `Using port ${port}`
+    //     ].join('\n');
+    //   }
+    //   const infoLog = traverse('/var/logs/info.log', 10);
+    //   if (infoLog && infoLog.type === 'file') {
+    //     infoLog.content = [
+    //       ...infoLog.content.split('\n'),
+    //       'Process stopped',
+    //       'Port modified',
+    //     ].join('\n');
+    //   }
+    //   setCurrentPort(port);
+    // }
 
-    updater();
+    // updater();
 
-    const id = setInterval(updater, 3 * 60 * 1000);
+    // const id = setInterval(updater, 5 * 60 * 1000);
 
     loadOnce = false;
     return () => {
-      clearInterval(id);
+      // clearInterval(id);
     }
   }, [freezeTime]);
 
