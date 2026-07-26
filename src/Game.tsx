@@ -57,6 +57,8 @@ function zalgify(text: string, strength: number = 0.9) {
 
 let loadOnce = true;
 
+let lineLength = 63;
+
 type Message = {
   type: 'system' | 'user' | 'directory' | 'file' | 'executable' | 'script';
   text: string;
@@ -782,6 +784,23 @@ function resolvePath(currentDirectory: string, relative: string) {
 type QueuedMessages = (Message & { index: number, timeout: number | number[] })[];
 const queue: QueuedMessages = [];
 
+const canvasCheck = document.createElement('canvas');
+const canvasCtx = canvasCheck.getContext('2d');
+
+if (canvasCtx) {
+  canvasCtx.font = '16px ui-monospace, SFMono-Regular, Consolas, monospace';
+  let len = 0;
+  let str = '';
+  while (canvasCtx.measureText(str).width < 608) {
+    str += '0';
+    len++;
+  }
+  
+  lineLength = len - 6;
+
+  console.log('max length: ', len);
+}
+
 export function Game() {
   const [start] = useState(new Date());
   const [history, _setHistory] = useState<Message[]>([]);
@@ -823,7 +842,7 @@ export function Game() {
             count++;
           }
           split[split.length - 1] += ch;
-          if (count === 63) {
+          if (count === lineLength) {
             count = 0;
             split.push('');
           }
@@ -1354,6 +1373,8 @@ export function Game() {
         case 'Control':
         case 'Meta':
         case 'Escape':
+        case 'F1':
+        case 'F2':
         case 'F3':
         case 'F4':
         case 'F5':
@@ -1524,10 +1545,6 @@ export function Game() {
         { type: 'system', text: `${date}`, index: 0, timeout: 20 },
       );
       handleCommand('cat welcome.txt', true);
-
-      // handleCommand(`echo "${finalMac}-${currentPort}-${errorCode}" > /tmp/session_lock`, true);
-      // handleCommand(`su a_gile 2026_aaron`, true);
-      // handleCommand(`chroot ${finalPid} /sandbox`, true);
     }
 
     loadOnce = false;
@@ -1562,11 +1579,11 @@ export function Game() {
   const zal = (cancelZalgo || freezeTime) ? 0 : 1 - left / total;
 
   const lastLine = `${user.name}@sys-main:${pwd || '/'}> ${input.slice(0, cursor)}${blink ? ' ' : '█'}${input.slice(cursor)}`;
-  const mid = lastLine.match(/.{1,63}/g)?.flatMap(line => line) ?? [];
-  const output = [mid[0], ...mid.slice(1).join('').match(/.{1,61}/g)?.flatMap(line => line) ?? []];
+  const mid = lastLine.match(new RegExp(`.{1,${lineLength}}`, 'g'))?.flatMap(line => line) ?? [];
+  const output = [mid[0], ...mid.slice(1).join('').match(new RegExp(`.{1,${lineLength - 2}}`, 'g'))?.flatMap(line => line) ?? []];
 
   const timerText = (freezeTime ? 'AI Contained' : left > 0 ? timeLeft : 'Containment Breached')
-    .padStart(64, ' ')
+    .padStart(lineLength + 1, ' ')
     .split('')
     .map((ch, i) => {
       if (i === 0) {
