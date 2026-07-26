@@ -590,7 +590,7 @@ const FileSystemRoot: INode = {
           ]
         },
         {
-          name: 'd_zine',
+          name: 'e_evans',
           type: 'directory',
           permissionLevel: 0,
           viewLevel: 0,
@@ -1212,9 +1212,9 @@ export function Game() {
         } else if (args[0] === 'b_tables' && args[1].toLocaleLowerCase() === 'sys-main_tgif') {
           output.push({ type: 'system', text: `Login Success` });
           setUser({permissionLevel: 2, name: 'b_tables'});
-        } else if (args[0] === 'd_zine' && args[1].toLocaleLowerCase() === 'evans') {
+        } else if (args[0] === 'e_evans' && args[1].toLocaleLowerCase() === 'ddd') {
           output.push({ type: 'system', text: `Login Success` });
-          setUser({ permissionLevel: 4, name: 'd_zine' });
+          setUser({ permissionLevel: 4, name: 'e_evans' });
         } else {
           output.push({ type: 'system', text: `Login Failed. Invalid credentials` });
         }
