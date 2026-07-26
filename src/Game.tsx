@@ -1583,7 +1583,7 @@ export function Game() {
   const output = [mid[0], ...mid.slice(1).join('').match(new RegExp(`.{1,${lineLength - 2}}`, 'g'))?.flatMap(line => line) ?? []];
 
   const timerText = (freezeTime ? 'AI Contained' : left > 0 ? timeLeft : 'Containment Breached')
-    .padStart(lineLength + 1, ' ')
+    .padStart(lineLength, ' ')
     .split('')
     .map((ch, i) => {
       if (i === 0) {
