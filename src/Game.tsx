@@ -1280,6 +1280,15 @@ export function Game() {
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
+      switch(event.key) {
+        case 'F1':
+          setMute(prev => !prev);
+          break;
+        case 'F2':
+          setCancelZalgo(prev => !prev);
+          break;
+      }
+
       if (queue.length > 0 || lost) {
         event.stopPropagation();
         event.preventDefault();
@@ -1338,12 +1347,6 @@ export function Game() {
           setTabCompleteResults(undefined);
           setTabCycle(undefined);
           flip();
-          break;
-        case 'F1':
-          setMute(prev => !prev);
-          break;
-        case 'F2':
-          setCancelZalgo(prev => !prev);
           break;
         case 'Shift':
         case 'CapsLock':
