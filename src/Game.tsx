@@ -1105,8 +1105,12 @@ export function Game() {
           for (let command of file.commands()) {
             output.push(...(handleCommand(command, true, 20, false, 'delay') ?? []));
           }
-        } else {
+        } else if (file) {
           output.push({ type: 'system', text: `'${path}' is not a script file` });
+        } else if (traverse(path, user.permissionLevel, 'list')) {
+          output.push({ type: 'system', text: 'Permission Denied' });
+        } else {
+          output.push({ type: 'system', text: `'${path}' not found` });
         }
         
       } break;
