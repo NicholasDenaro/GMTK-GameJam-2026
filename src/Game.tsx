@@ -1182,7 +1182,7 @@ export function Game() {
         if (args[0] === '' + finalPid && args[1] === '/sandbox') {
           const file = traverse('/tmp/session_lock', 10);
           if (file && file.type === 'file') {
-            if (file.content === `${finalMac}-${currentPort}-${errorCode}`) {
+            if (file.content.toLowerCase() === `${finalMac}-${currentPort}-${errorCode}`.toLowerCase()) {
               output.push({ type: 'system', text: `Containment successful with ${timeLeft} left` });
               setFreezeTime(new Date());
               output.push({ type: 'user', text: prompt, timeout: 0});
